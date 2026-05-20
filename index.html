@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Calculator V_02</title>
+    <style>
+        :root {
+            --app-w: 1920px;
+            --ies-blue: #58a6ff;
+            --success-green: #238636;
+            --warning-orange: #d29922;
+            --danger-red: #f85149;
+            --bg-dark: #0d1117;
+            --panel-bg: #161b22;
+            --border-color: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+        }
+
+        /* Sequence Color Highlights */
+        .seq-color-1 { color: #39ff14 !important; border-color: #39ff14 !important; }
+        .seq-color-2 { color: #00ffff !important; border-color: #00ffff !important; }
+        .seq-color-3 { color: #ff00ff !important; border-color: #ff00ff !important; }
+        .seq-color-4 { color: #ffff00 !important; border-color: #ffff00 !important; }
+        .seq-color-5 { color: #ff3131 !important; border-color: #ff3131 !important; }
+        .seq-color-6 { color: #bc13fe !important; border-color: #bc13fe !important; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        
+        body { 
+            margin: 0; padding: 0; background: #000; 
+            display: flex; justify-content: center; align-items: flex-start; 
+            height: 100vh; width: 100vw; overflow: hidden; color: var(--text-main);
+        }
+
+        #main-viewport { 
+            width: var(--app-w); height: 100%; background: var(--bg-dark); 
+            display: flex; flex-direction: column; border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        header {
+            height: 80px;
+            background: var(--panel-bg); 
+            border-bottom: 3px solid var(--ies-blue);
+            display: flex; align-items: center; 
+            padding: 0 30px; flex-shrink: 0;
+            z-index: 1000;
+        }
+
+        .ies-logo-box {
+            background-color: #1f6feb; color: white; padding: 6px 15px;
+            border-radius: 4px; font-size: 1.4em; font-weight: bold; margin-right: 25px;
+        }
+
+        header h1 { color: var(--ies-blue); font-size: 1.6em; margin: 0; letter-spacing: 1.5px; text-transform: uppercase; }
+
+        .top-tools { margin-left: auto; display: flex; gap: 12px; }
+
+        .content-area { display: flex; flex: 1; overflow: hidden; padding: 15px; gap: 15px; width: 100%; }
+
+        .sidebar { width: 460px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex-shrink: 0; padding-bottom: 20px; }
+
+        .card { background: var(--panel-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .card h2 { color: var(--ies-blue); margin: 0 0 10px 0; font-size: 0.85em; text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;}
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .full-row { grid-column: span 2; }
+
+        label { color: var(--text-muted); font-size: 0.75em; display: block; margin-bottom: 4px; font-weight: bold; }
+        input[type="number"], input[type="text"], select { 
+            width: 100%; padding: 8px; background: var(--bg-dark); 
+            border: 1px solid var(--border-color); color: white; border-radius: 4px; font-size: 0.9em; 
+        }
+
+        .result-item { background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-color); }
+        .result-item span { display: block; color: var(--ies-blue); font-weight: bold; font-size: 1.1em; }
+
+        .warning-banner {
+            background: rgba(248, 81, 73, 0.15); border: 1px solid var(--danger-red);
+            color: var(--danger-red); padding: 10px; border-radius: 4px; font-size: 0.8em;
+            margin-top: 10px; display: none; line-height: 1.4;
+        }
+
+        .main-display {
+            flex: 1; background: #010409; border-radius: 6px; display: flex; flex-direction: column;
+            border: 1px solid var(--border-color); overflow: hidden;
+        }
+
+        .tab-bar { display: flex; background: var(--panel-bg); border-bottom: 1px solid var(--border-color); }
+        .tab { 
+            padding: 14px 28px; cursor: pointer; border-right: 1px solid var(--border-color); 
+            font-size: 0.85em; font-weight: bold; color: var(--text-muted);
+        }
+        .tab.active { background: #010409; color: var(--ies-blue); border-bottom: 2px solid var(--ies-blue); }
+
+        #video-wall-container { flex: 1; overflow-y: auto; padding: 20px; }
+        .monitor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+        .monitor { aspect-ratio: 16/9; background: #000; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+        .monitor-label { background: #1f6feb; color: #fff; font-size: 0.75em; text-align: center; padding: 5px 0; font-weight: bold; }
+        .tiles { display: grid; flex: 1; }
+        .tile { border: 0.5px solid #222; display: flex; align-items: center; justify-content: center; font-size: 1.2em; font-weight: bold; transition: color 0.3s; }
+
+        .btn { padding: 10px 18px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85em; }
+        .btn-save { background: #238636; color: white; }
+        .btn-load { background: #6e7681; color: white; }
+        .btn-print { background: #d29922; color: white; }
+
+        #status-indicator {
+            display: none;
+            background: rgba(35, 134, 54, 0.2);
+            color: #39ff14;
+            border: 1px solid #238636;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* PRINT STYLES - OPTIMIZED FOR ONE PAGE */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { 
+                position: absolute; left: 0; top: 0; width: 100%; 
+                background: white !important; color: black !important; 
+                display: block !important; padding: 10mm;
+            }
+            .p-section { border: 1px solid #000; padding: 10px; margin-bottom: 10px; page-break-inside: avoid; }
+            .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .p-banner { background: #f0f0f0 !important; border: 2px solid #000; padding: 10px; text-align: center; margin-top: 5px; }
+            h1, h2, h3 { color: #000 !important; margin: 0 0 5px 0; }
+            p { margin: 2px 0; font-size: 10pt; }
+            @page { size: A4; margin: 0; }
+        }
+        #print-area { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="main-viewport">
+    <header>
+        <div class="ies-logo-box">IES</div>
+        <h1>Control room video wall monitor calculator</h1>
+        <div class="top-tools">
+            <button class="btn btn-save" onclick="saveConfig()">💾 Save Config</button>
+            <button class="btn btn-load" onclick="document.getElementById('fIn').click()">📂 Load Config</button>
+            <button class="btn btn-print" onclick="generateReport()">🖨️ Print Report</button>
+            <input type="file" id="fIn" style="display:none" onchange="loadConfig(event)">
+        </div>
+    </header>
+
+    <div class="content-area">
+        <div class="sidebar">
+            <div class="card">
+                <h2>Project Information</h2>
+                <label>PROJECT NAME:</label>
+                <input type="text" id="p-name" placeholder="Client or Project Name..." oninput="calc()">
+            </div>
+
+            <div class="card">
+                <h2>1. Camera Input Details</h2>
+                <div class="input-grid">
+                    <div>
+                        <label>TOTAL CAMERAS:</label>
+                        <input type="number" id="cam-total" value="500" oninput="calc()">
+                    </div>
+                    <div>
+                        <label>PRIORITY METHOD:</label>
+                        <select id="crit-mode" onchange="calc()">
+                            <option value="pct">Percentage (%)</option>
+                            <option value="qty">Fixed Quantity</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label id="crit-lbl">RATIO (%):</label>
+                        <input type="number" id="crit-val" value="20" oninput="calc()">
+                    </div>
+                    <div class="result-item">
+                        <label>STATIC CAMERAS:</label>
+                        <span id="res-stat-c">100</span>
+                    </div>
+                    <div class="result-item full-row">
+                        <label>SEQUENCE CAMERAS:</label>
+                        <span id="res-seq-c">400</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>2. Monitor Selection Result</h2>
+                <div class="input-grid">
+                    <div>
+                        <label>SPLIT (N x N):</label>
+                        <select id="split" onchange="calc()">
+                            <option value="4">4x4 (16 Tiles)</option>
+                            <option value="5">5x5 (25 Tiles)</option>
+                            <option value="6" selected>6x6 (36 Tiles)</option>
+                            <option value="8">8x8 (64 Tiles)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>MONITOR SIZE (INCH):</label>
+                        <select id="size" onchange="calc()">
+                            <option value="21">21"</option>
+                            <option value="24">24"</option>
+                            <option value="27">27"</option>
+                            <option value="32" selected>32"</option>
+                            <option value="43">43"</option>
+                            <option value="55">55"</option>
+                        </select>
+                    </div>
+                    <div class="result-item full-row" style="background: var(--success-green);">
+                        <label style="color:white">TOTAL MONITOR QUANTITY:</label>
+                        <span id="res-total-m" style="color:white; font-size:1.5em">5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>3. SIRA Compliance Check</h2>
+                <div class="input-grid">
+                    <div class="result-item">
+                        <label>TILE WIDTH (mm):</label>
+                        <span id="tile-w">0</span>
+                    </div>
+                    <div class="result-item">
+                        <label>TILE HEIGHT (mm):</label>
+                        <span id="tile-h">0</span>
+                    </div>
+                </div>
+                <div id="sira-alert" class="warning-banner">
+                    ⚠️ <b>SIRA NON-COMPLIANCE:</b> Minimum tile size must be 120x67mm.
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>The design is capable for up to</h2>
+                <div class="input-grid">
+                    <div class="result-item">
+                        <label>MAX STATIC CAP:</label>
+                        <span id="cap-stat">0</span>
+                    </div>
+                    <div class="result-item">
+                        <label>MAX SEQ CAP:</label>
+                        <span id="cap-seq">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: right; color: var(--text-muted); font-size: 0.7em; margin-top: 5px;">
+                Version <span style="font-weight: bold;">V_02</span>
+            </div>
+        </div>
+
+        <div class="main-display">
+            <div class="tab-bar">
+                <div class="tab active" onclick="tab('seq')">CAMERA SEQUENCE VIEW</div>
+                <div class="tab" onclick="tab('stat')">STATIC CAMERA VIEW</div>
+            </div>
+            
+            <div id="seq-ctrl" style="background:#161b22; padding:12px 25px; display:flex; align-items:center; gap:20px; border-bottom:1px solid #333;">
+                <button class="btn btn-save" id="sBtn" onclick="runSeq()">START SEQ</button>
+                <button class="btn btn-load" onclick="stopSeq()">RESET</button>
+                <div id="status-indicator">● LIVE SEQUENCE</div>
+                <label style="margin:0">Dwell (s):</label>
+                <input type="number" id="dwell" value="10" style="width:70px" oninput="if(sInt) runSeq()">
+                <span id="tDisplay" style="color:var(--warning-orange); font-weight:bold; font-family:monospace; font-size:1.2em;">00s</span>
+                <span id="seqIdx" style="margin-left:auto; font-weight:bold;">SEQUENCE: 0</span>
+            </div>
+
+            <div id="video-wall-container">
+                <div class="monitor-grid" id="wall"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="print-area">
+    <h2 id="pr-title" style="border-bottom: 2px solid #000; padding-bottom: 5px;">Control room video wall monitor calculator</h2>
+    <div class="p-section">
+        <h3>1. Camera Configuration</h3>
+        <div class="p-grid">
+            <p>Total Project Cameras: <b id="pr-total"></b></p>
+            <p>High Priority (Static): <b id="pr-stat-c"></b></p>
+            <p>Standard (Sequence): <b id="pr-seq-c"></b></p>
+        </div>
+    </div>
+    <div class="p-section">
+        <h3>2. System Hardware Requirements</h3>
+        <div class="p-grid">
+            <p>Display Grid Layout: <b id="pr-split"></b></p>
+            <p>Proposed Monitor Size: <b id="pr-size"></b>"</p>
+        </div>
+        <div class="p-banner">
+            <p style="font-size: 14pt;">Total Required Monitors: <b id="pr-total-m"></b> Units</p>
+        </div>
+    </div>
+    <div class="p-section">
+        <h3>3. SIRA Technical Compliance</h3>
+        <div class="p-grid">
+            <p>Calculated Tile Physical Dimension: <b id="pr-tile"></b></p>
+            <p>SIRA Compliance Status: <b id="pr-status"></b></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let mode = 'seq', sInt = null, tInt = null, off = 0, clock = 0, sCount = 1;
+
+    function tab(t) {
+        mode = t;
+        document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('seq-ctrl').style.display = (t === 'seq') ? 'flex' : 'none';
+        calc();
+    }
+
+    function calc() {
+        const total = parseInt(document.getElementById('cam-total').value) || 0;
+        const m = document.getElementById('crit-mode').value;
+        const v = parseInt(document.getElementById('crit-val').value) || 0;
+        
+        document.getElementById('crit-lbl').textContent = m === 'pct' ? 'RATIO (%):' : 'QUANTITY:';
+
+        let stat = (m === 'pct') ? Math.round(total * (v / 100)) : v;
+        stat = Math.min(stat, total);
+        const seq = total - stat;
+
+        document.getElementById('res-stat-c').textContent = stat;
+        document.getElementById('res-seq-c').textContent = seq;
+
+        const n = parseInt(document.getElementById('split').value);
+        const tpm = n * n;
+        const sm = stat > 0 ? Math.ceil(stat / tpm) : 0;
+        const qm = seq > 0 ? Math.ceil(seq / (tpm * 6)) : 0;
+
+        document.getElementById('res-total-m').textContent = sm + qm;
+        document.getElementById('cap-stat').textContent = sm * tpm;
+        document.getElementById('cap-seq').textContent = qm * tpm * 6;
+
+        const diag = parseInt(document.getElementById('size').value);
+        const w = Math.sqrt((Math.pow(diag * 25.4, 2) * 256) / 337);
+        const h = w * (9/16);
+        const tw = Math.round(w / n);
+        const th = Math.round(h / n);
+        
+        document.getElementById('tile-w').textContent = tw;
+        document.getElementById('tile-h').textContent = th;
+        document.getElementById('sira-alert').style.display = (tw < 120 || th < 67) ? 'block' : 'none';
+
+        draw(mode === 'seq' ? qm : sm, n, mode === 'seq' ? seq : stat);
+    }
+
+    function draw(num, n, total) {
+        const wall = document.getElementById('wall');
+        wall.innerHTML = '';
+        for(let i=0; i<num; i++) {
+            const m = document.createElement('div'); m.className = 'monitor';
+            const l = document.createElement('div'); l.className = 'monitor-label';
+            l.textContent = `VIDEO WALL SCREEN ${i+1} (${mode === 'seq' ? 'SEQUENCE' : 'STATIC'})`;
+            const ts = document.createElement('div'); ts.className = 'tiles';
+            ts.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+            
+            for(let j=0; j < n*n; j++) {
+                const t = document.createElement('div'); t.className = 'tile';
+                const idx = (i * n * n) + j;
+                if(mode === 'seq') {
+                    const c = (idx * 6) + 1 + off;
+                    t.textContent = c <= total ? `C${c}` : '-';
+                    if(sInt) t.classList.add(`seq-color-${sCount}`);
+                } else {
+                    t.textContent = idx < total ? `C${idx + 1}` : '-';
+                }
+                ts.appendChild(t);
+            }
+            m.appendChild(l); m.appendChild(ts); wall.appendChild(m);
+        }
+    }
+
+    function runSeq() {
+        stopSeq();
+        const d = parseInt(document.getElementById('dwell').value) || 10;
+        clock = d;
+        document.getElementById('status-indicator').style.display = 'block';
+        sInt = setInterval(() => {
+            off = (off + 1) % 6; sCount = (sCount % 6) + 1;
+            calc();
+            document.getElementById('seqIdx').textContent = `SEQUENCE: ${sCount}`;
+            document.getElementById('seqIdx').className = `seq-color-${sCount}`;
+        }, d * 1000);
+        tInt = setInterval(() => {
+            clock--; if(clock <= 0) clock = d;
+            document.getElementById('tDisplay').textContent = clock.toString().padStart(2,'0') + "s";
+        }, 1000);
+        document.getElementById('sBtn').disabled = true;
+    }
+
+    function stopSeq() {
+        clearInterval(sInt); clearInterval(tInt);
+        sInt = null; tInt = null; off = 0; sCount = 1;
+        document.getElementById('sBtn').disabled = false;
+        document.getElementById('tDisplay').textContent = "00s";
+        document.getElementById('seqIdx').textContent = "SEQUENCE: 0";
+        document.getElementById('seqIdx').className = "";
+        document.getElementById('status-indicator').style.display = 'none';
+        calc();
+    }
+
+    function saveConfig() {
+        const obj = { p: document.getElementById('p-name').value, c: document.getElementById('cam-total').value, m: document.getElementById('crit-mode').value, v: document.getElementById('crit-val').value, sp: document.getElementById('split').value, sz: document.getElementById('size').value };
+        const blob = new Blob([JSON.stringify(obj)], {type: 'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Monitor_Config.json`; a.click();
+    }
+
+    function loadConfig(e) {
+        const r = new FileReader();
+        r.onload = (ev) => {
+            const d = JSON.parse(ev.target.result);
+            document.getElementById('p-name').value = d.p; document.getElementById('cam-total').value = d.c;
+            document.getElementById('crit-mode').value = d.m; document.getElementById('crit-val').value = d.v;
+            document.getElementById('split').value = d.sp; document.getElementById('size').value = d.sz;
+            calc();
+        };
+        r.readAsText(e.target.files[0]);
+    }
+
+    function generateReport() {
+        document.getElementById('pr-total').textContent = document.getElementById('cam-total').value;
+        document.getElementById('pr-stat-c').textContent = document.getElementById('res-stat-c').textContent;
+        document.getElementById('pr-seq-c').textContent = document.getElementById('res-seq-c').textContent;
+        document.getElementById('pr-split').textContent = document.getElementById('split').value + "x" + document.getElementById('split').value;
+        document.getElementById('pr-size').textContent = document.getElementById('size').value;
+        document.getElementById('pr-total-m').textContent = document.getElementById('res-total-m').textContent;
+        document.getElementById('pr-tile').textContent = document.getElementById('tile-w').textContent + " x " + document.getElementById('tile-h').textContent + " mm";
+        document.getElementById('pr-status').textContent = (document.getElementById('sira-alert').style.display === 'none') ? "PASSED (SIRA COMPLIANT)" : "FAILED (NON-COMPLIANT)";
+        window.print();
+    }
+
+    window.onload = calc;
+</script>
+</body>
+</html>
