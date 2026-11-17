@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Wall Calculator V04</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#0b1016;color:#d5dde6;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.4;overflow-x:hidden}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace}
+button,input,select{font-family:inherit;font-size:14px}
+
+header{background:#121a23;border-bottom:3px solid #3fa9f5;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+header h1{margin:0;font-size:17px;font-weight:700;color:#e8eef5;letter-spacing:.3px;flex:1 1 260px}
+header h1 small{display:block;font-size:12px;font-weight:500;color:#8a99ab;letter-spacing:0}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid #2c3a4b;background:#1a2532;color:#e8eef5;padding:9px 14px;border-radius:6px;font-weight:600;cursor:pointer;touch-action:manipulation}
+.btn:hover{background:#223142}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:#1f6feb;border-color:#1f6feb;color:#ffffff}
+.btn.primary:hover{background:#2b7bf5}
+.btn.go{background:#238636;border-color:#238636;color:#ffffff}
+.btn.sm{padding:6px 10px;font-size:12.5px}
+.btn.on{background:#3fa9f5;border-color:#3fa9f5;color:#06121f}
+.btn:disabled{opacity:.5;cursor:default}
+
+.layout{display:flex;flex-direction:column;gap:14px;padding:14px 16px;width:100%}
+@media(min-width:1000px){
+ .layout{flex-direction:row;align-items:flex-start}
+ .sidebar{width:400px;flex:0 0 400px;position:sticky;top:14px}
+ .main{flex:1;min-width:0}
+}
+@media(min-width:1300px){.sidebar{width:440px;flex-basis:440px}}
+.sidebar{display:flex;flex-direction:column;gap:10px}
+.main{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* sidebar tabs */
+.stabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#0f161e;border:1px solid #263241;border-radius:8px;padding:4px}
+.stab{background:none;border:none;color:#8a99ab;font-weight:600;font-size:12.5px;padding:9px 4px;border-radius:5px;cursor:pointer;position:relative;white-space:nowrap}
+.stab:hover{color:#d5dde6;background:#16202b}
+.stab.on{background:#1f6feb;color:#ffffff}
+.stab.err::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#f85149}
+.spane{display:none}
+.spane.on{display:block}
+
+.card{background:#121a23;border:1px solid #263241;border-radius:8px;padding:12px 14px}
+.card h2{margin:0 0 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#3fa9f5;border-bottom:1px solid #263241;padding-bottom:7px;display:flex;justify-content:space-between;gap:8px}
+.card h2 .ref{color:#6b7a8c;font-weight:500;text-transform:none;letter-spacing:0}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:420px){.grid{grid-template-columns:1fr 1fr}.span2{grid-column:span 2}}
+.grid3{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:760px){.grid3{grid-template-columns:repeat(4,1fr)}}
+label{display:block;font-size:11.5px;font-weight:600;color:#8a99ab;margin-bottom:4px}
+input[type=number],input[type=text],select{width:100%;padding:9px 10px;background:#0b1016;border:1px solid #2c3a4b;border-radius:6px;color:#ffffff;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{outline:none;border-color:#3fa9f5}
+select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9d1d9' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+input.bad{border-color:#f85149;background:#2a1215}
+.chk{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:#c3cdd8;font-weight:500;margin:0;cursor:pointer}
+.chk input{margin-top:2px;width:16px;height:16px;flex:0 0 16px;accent-color:#3fa9f5}
+.hint{font-size:11.5px;color:#7d8c9e;margin-top:6px}
+.out{background:#0b1016;border:1px solid #263241;border-radius:6px;padding:7px 10px}
+.out span{display:block;font-family:'IBM Plex Mono',Consolas,monospace;font-weight:600;font-size:15px;color:#7cc4ff}
+.errbox{display:none;background:#2a1215;border:1px solid #f85149;color:#ffb3ae;border-radius:6px;padding:10px 12px;font-size:12.5px}
+.errbox ul{margin:4px 0 0 18px;padding:0}
+.navrow{display:flex;justify-content:space-between;margin-top:12px;gap:8px}
+
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:640px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1400px){.kpis{grid-template-columns:repeat(6,1fr)}}
+.kpi{background:#121a23;border:1px solid #263241;border-radius:8px;padding:10px 12px}
+.kpi .k{font-size:11px;color:#8a99ab;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.kpi .v{font-family:'IBM Plex Mono',Consolas,monospace;font-size:22px;font-weight:600;color:#e8eef5;margin-top:2px}
+.kpi .s{font-size:11.5px;color:#7d8c9e}
+.kpi.hero{background:#0f2a18;border-color:#238636}
+.kpi.hero .v{color:#5fe07a}
+.kpi.badk{background:#2a1215;border-color:#f85149}
+.kpi.badk .v{color:#ff8a83}
+
+.panel{background:#121a23;border:1px solid #263241;border-radius:8px;overflow:hidden;min-width:0}
+.tabs{display:flex;overflow-x:auto;border-bottom:1px solid #263241;background:#0f161e}
+.tab{padding:12px 18px;font-weight:600;font-size:13px;color:#8a99ab;cursor:pointer;white-space:nowrap;border:none;background:none;border-bottom:2px solid transparent}
+.tab.on{color:#3fa9f5;border-bottom-color:#3fa9f5;background:#121a23}
+.pane{display:none;padding:14px}
+.pane.on{display:block}
+
+.seqbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:10px;background:#0f161e;border:1px solid #263241;border-radius:8px;padding:10px 12px}
+.seqbar .stat{font-family:'IBM Plex Mono',Consolas,monospace;font-weight:600}
+.lbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-bottom:10px}
+.lbar .lab{font-size:12px;color:#8a99ab;font-weight:600;margin-right:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:#2a2110;color:#f2c25c;border:1px solid #d29922}
+.setpill{display:inline-block;padding:3px 10px;border-radius:12px;font-weight:700;font-size:12.5px;color:#0b1016}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#a9b6c4;margin:0 0 10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}
+
+.wallwrap{overflow-x:auto;overflow-y:hidden;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.wall{display:grid;background:#05080b;padding:8px;border-radius:6px;border:1px solid #263241;margin:0 auto}
+.slot{min-width:0;position:relative}
+.wall.edit .slot{outline:1px dashed #2c3a4b;outline-offset:-1px;border-radius:2px}
+.wall.edit .slot.hot{outline:2px solid #3fa9f5;background:#0f2133}
+.mon{background:#000000;display:flex;flex-direction:column;min-width:0;border:1px solid #2c3a4b;border-radius:2px}
+.wall.edit .mon{cursor:grab;touch-action:none}
+.wall.edit .mon:hover{border-color:#3fa9f5}
+.mon .tag{font-size:max(9px,.75em);font-weight:700;color:#ffffff;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
+.mon.crit .tag{background:#b5541d}
+.mon.seq .tag{background:#16707a}
+.mon.map .tag{background:#5b4bb0}
+.tiles{display:grid;gap:1px;background:#1b2430}
+.t{background:#06090d;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',Consolas,monospace;font-weight:600;overflow:hidden;white-space:nowrap;color:#c9d1d9;min-width:0}
+.mon.crit .t{background:#1f120a;color:#ffb27a}
+.t.empty{color:#3a4654 !important}
+.mapface{display:flex;align-items:center;justify-content:center;color:#a99cf0;font-weight:600;font-size:max(9px,.9em);text-align:center;padding:4px;background:#0e0b1c}
+.ghost{position:fixed;pointer-events:none;z-index:999;opacity:.85;box-shadow:0 8px 24px #000000}
+.wallnote{font-size:12px;color:#7d8c9e;margin-top:8px}
+
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border-bottom:1px solid #263241;padding:7px 8px;text-align:left;vertical-align:top}
+th{color:#8a99ab;font-size:11px;text-transform:uppercase;letter-spacing:.5px;background:#0f161e;position:sticky;top:0}
+td.num{font-family:'IBM Plex Mono',Consolas,monospace;white-space:nowrap}
+tr.pick{cursor:pointer}
+tr.pick:hover td{background:#16202b}
+tr.sel td{background:#13263a}
+.st{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap}
+.st.PASS{background:#0f2a18;color:#5fe07a;border:1px solid #238636}
+.st.FAIL{background:#2a1215;color:#ff8a83;border:1px solid #f85149}
+.st.INFO{background:#0f1f33;color:#7cc4ff;border:1px solid #1f6feb}
+.st.REVIEW{background:#2a2110;color:#f2c25c;border:1px solid #d29922}
+.st.OK{background:#13231c;color:#8fd6a5;border:1px solid #2f6b45}
+.st.OPT{background:#1f1a2e;color:#c2b5f5;border:1px solid #5b4bb0}
+.ref{color:#7d8c9e;font-size:11.5px}
+.sched td{font-family:'IBM Plex Mono',Consolas,monospace;white-space:nowrap}
+.sched .cur{background:#16242f}
+.notes{font-size:13px;color:#c3cdd8}
+.notes h3{font-size:13px;color:#3fa9f5;margin:14px 0 6px}
+.notes p,.notes li{margin:4px 0}
+.notes ul{padding-left:18px;margin:4px 0}
+.ver{font-size:11.5px;color:#6b7a8c;text-align:right}
+
+.spgrid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:1200px){.spgrid{grid-template-columns:340px 1fr}}
+.subcard{background:#0f161e;border:1px solid #263241;border-radius:8px;padding:12px}
+.subcard h3{margin:0 0 10px;font-size:12px;color:#3fa9f5;text-transform:uppercase;letter-spacing:.6px}
+.sres{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+@media(min-width:760px){.sres{grid-template-columns:repeat(4,1fr)}}
+.sres .out span{font-size:16px}
+.sres .out small{display:block;color:#7d8c9e;font-size:11px;margin-top:2px}
+.elev{background:#05080b;border:1px solid #263241;border-radius:6px;padding:6px;overflow-x:auto}
+.elev svg{display:block;width:100%;height:auto;min-width:520px}
+
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#0b1016}
+::-webkit-scrollbar-thumb{background:#2c3a4b;border-radius:4px}
+
+#print-area{display:none}
+@media print{
+ @page{size:A4;margin:12mm}
+ body{background:#ffffff !important;color:#000000 !important;font-size:10pt}
+ header,.layout{display:none !important}
+ #print-area{display:block !important;color:#000000}
+ #print-area h1{font-size:16pt;margin:0 0 2px}
+ #print-area h2{font-size:11.5pt;margin:12px 0 5px;border-bottom:1.5px solid #000000;padding-bottom:2px}
+ #print-area .meta{font-size:9.5pt;color:#333333;margin-bottom:6px}
+ #print-area table{font-size:8.8pt;width:100%;border-collapse:collapse}
+ #print-area th,#print-area td{border:1px solid #888888;padding:3px 5px;background:#ffffff !important;color:#000000 !important;position:static}
+ #print-area th{background:#eeeeee !important;text-transform:none;letter-spacing:0;font-size:8.8pt}
+ #print-area .banner{border:2px solid #000000;padding:8px;text-align:center;font-size:13pt;font-weight:700;margin:8px 0}
+ #print-area .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ #print-area .sec{page-break-inside:avoid}
+ #print-area .pb{page-break-before:always}
+ #print-area svg{max-width:100%;height:auto;max-height:125mm}
+ #print-area .foot{font-size:8pt;color:#444444;margin-top:10px}
+ #print-area .p-PASS,#print-area .p-OK{color:#0a6b25 !important;font-weight:700}
+ #print-area .p-FAIL{color:#b00020 !important;font-weight:700}
+ #print-area .p-REVIEW{color:#8a5a00 !important;font-weight:700}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<header>
+ <h1>Control Room Video Wall &amp; Monitor Calculator <small>V04 · SIRA Administrative Resolution No. 13 of 2025 · ergonomic and space checks advisory</small></h1>
+ <div class="tools">
+  <button class="btn" onclick="saveConfig()">Save</button>
+  <button class="btn" onclick="document.getElementById('fileIn').click()">Load</button>
+  <button class="btn" onclick="resetDefaults()">Defaults</button>
+  <button class="btn primary" onclick="printReport()">Print report</button>
+  <input type="file" id="fileIn" accept=".json,application/json" style="display:none" onchange="loadConfig(event)">
+ </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+ <div class="stabs" id="stabs">
+  <button class="stab" data-s="sProj">Project</button>
+  <button class="stab on" data-s="sCam">Cameras</button>
+  <button class="stab" data-s="sSeq">Sequence</button>
+  <button class="stab" data-s="sWall">Wall monitors</button>
+  <button class="stab" data-s="sWs">Operators</button>
+  <button class="stab" data-s="sErg">Ergonomics</button>
+ </div>
+
+ <div id="errbox" class="errbox"><b>Fix these inputs. Results are hidden until they are valid:</b><ul id="errlist"></ul></div>
+
+ <div class="card spane" id="sProj">
+  <h2>Project</h2>
+  <div class="grid">
+   <div class="span2"><label for="pName">Project name</label><input type="text" id="pName" placeholder="Client / project name"></div>
+   <div><label for="facility">Room type</label>
+    <select id="facility">
+     <option value="general">Facility control room</option>
+     <option value="moc">Security Monitoring Operations Centre (Ch 39)</option>
+    </select></div>
+   <div><label for="recorders">Recording devices (NVR)</label><input type="number" id="recorders" value="4" min="0" step="1"></div>
+   <div id="mocRow1"><label for="roomArea">Ops room area (m²)</label><input type="number" id="roomArea" value="30" min="0" step="0.1"></div>
+   <div id="mocRow2" style="align-self:end"><label class="chk"><input type="checkbox" id="manager" checked> Room manager on every shift</label></div>
+  </div>
+ </div>
+
+ <div class="card spane on" id="sCam">
+  <h2>Cameras <span class="ref">Display items 6, 9</span></h2>
+  <div class="grid">
+   <div><label for="camTotal">Total cameras</label><input type="number" id="camTotal" value="500" min="0" step="1"></div>
+   <div><label for="critMode">Critical camera input</label>
+    <select id="critMode"><option value="pct">Percentage of total</option><option value="qty">Fixed quantity</option></select></div>
+   <div><label for="critVal" id="critLbl">Critical cameras (%)</label><input type="number" id="critVal" value="20" min="0" step="1"></div>
+   <div><label for="camAspect">Camera aspect ratio</label>
+    <select id="camAspect"><option value="1.7778">16:9</option><option value="1.6">16:10</option><option value="1.3333">4:3</option></select></div>
+   <div class="out"><label>Critical (static)</label><span id="oCrit">–</span></div>
+   <div class="out"><label>Normal (sequenced)</label><span id="oNorm">–</span></div>
+  </div>
+  <div class="hint">Critical = entrances, reception, drop-off, lift lobbies, main-floor stairwells, main lobby, and any camera the security officer or SIRA marks important (item 9). Percentage is rounded to the nearest camera.</div>
+ </div>
+
+ <div class="card spane" id="sSeq">
+  <h2>Sequencing <span class="ref">Display item 10</span></h2>
+  <div class="grid">
+   <div><label for="seqSets">Sets per cycle (max 6)</label><input type="number" id="seqSets" value="6" min="1" max="6" step="1"></div>
+   <div><label for="seqCycle">Total cycle time (s, max 60)</label><input type="number" id="seqCycle" value="60" min="1" max="60" step="1"></div>
+   <div class="out"><label>Sets actually used</label><span id="oSetsUsed">–</span></div>
+   <div class="out"><label>Dwell per set</label><span id="oDwell">–</span></div>
+  </div>
+  <div class="hint">Only normal cameras are sequenced, at the edges of the wall. Dwell = cycle ÷ sets used. If the wall has spare sequence tiles, fewer sets are needed and each set dwells longer.</div>
+ </div>
+
+ <div class="card spane" id="sWall">
+  <h2>Video wall monitors <span class="ref">Display items 1–5, 11</span></h2>
+  <div class="grid">
+   <div><label for="wallSize">Panel size</label>
+    <select id="wallSize">
+     <option value="32">32"</option><option value="43">43"</option><option value="46">46"</option><option value="49">49"</option>
+     <option value="50">50"</option><option value="55" selected>55"</option><option value="65">65"</option><option value="75">75"</option>
+     <option value="86">86"</option><option value="custom">Custom (enter active area)</option>
+    </select></div>
+   <div><label for="bezel">Bezel per edge (mm)</label><input type="number" id="bezel" value="1.75" min="0" step="0.05"></div>
+   <div><label for="actW">Active area width (mm)</label><input type="number" id="actW" value="1209.6" min="0" step="0.1"></div>
+   <div><label for="actH">Active area height (mm)</label><input type="number" id="actH" value="680.4" min="0" step="0.1"></div>
+   <div class="span2 hint" style="margin-top:-4px">Active area fills in with typical values for the size. Replace them with the datasheet figures. Bezel-to-bezel gap = 2 × bezel per edge = <b id="oB2B" class="mono">–</b> mm.</div>
+   <div><label for="tileCols">Split: columns per monitor</label><input type="number" id="tileCols" value="6" min="1" max="10" step="1"></div>
+   <div><label for="tileRows">Split: rows per monitor</label><input type="number" id="tileRows" value="6" min="1" max="10" step="1"></div>
+   <div><label for="wallRows">Auto layout: monitor rows</label><input type="number" id="wallRows" value="1" min="1" max="8" step="1"></div>
+   <div><label for="mapMon">Map / alarm / data monitors</label><input type="number" id="mapMon" value="0" min="0" step="1"></div>
+   <div><label for="wallRes">Panel resolution</label>
+    <select id="wallRes"><option value="720">HD 720p</option><option value="1080" selected>Full HD 1080p</option><option value="2160">4K UHD 2160p</option></select></div>
+   <div class="out"><label>Tile image size (mm)</label><span id="oTile">–</span></div>
+   <div class="span2"><label class="chk"><input type="checkbox" id="chk247" checked> Panels rated for 24/7/365 operation, 3-year continuous life (item 1)</label></div>
+   <div class="span2"><label class="chk"><input type="checkbox" id="chkSurv" checked> Surveillance / professional display, not a TV (item 3)</label></div>
+  </div>
+  <div class="hint">Changing the row count rebuilds the auto layout. Drag monitors on the Video wall tab for a custom arrangement.</div>
+ </div>
+
+ <div class="card spane" id="sWs">
+  <h2>Operator workstations <span class="ref">Display items 4, 8</span></h2>
+  <div class="grid">
+   <div><label for="opCount">Operators per shift</label><input type="number" id="opCount" value="2" min="0" step="1"></div>
+   <div><label for="wsPerOp">Monitors per operator</label><input type="number" id="wsPerOp" value="2" min="0" step="1"></div>
+   <div><label for="wsSize">Workstation monitor size (inch)</label><input type="number" id="wsSize" value="24" min="0" step="0.5"></div>
+   <div><label for="wsRes">Workstation resolution</label>
+    <select id="wsRes"><option value="720">HD 720p</option><option value="1080" selected>Full HD 1080p</option><option value="1440">QHD 1440p</option><option value="2160">4K UHD 2160p</option></select></div>
+   <div class="span2"><label class="chk"><input type="checkbox" id="wsRule"> Also apply the 120 × 67 mm tile rule to workstation monitors (stricter than the text requires)</label></div>
+   <div id="wsSplitRow1"><label for="wsCols">Workstation split: columns</label><input type="number" id="wsCols" value="4" min="1" max="10" step="1"></div>
+   <div id="wsSplitRow2"><label for="wsRows">Workstation split: rows</label><input type="number" id="wsRows" value="4" min="1" max="10" step="1"></div>
+   <div class="out span2"><label>Workstation monitors total</label><span id="oWs">–</span></div>
+  </div>
+ </div>
+
+ <div class="card spane" id="sErg">
+  <h2>Ergonomics (advisory) <span class="ref">Not SIRA</span></h2>
+  <div class="grid">
+   <div><label for="ergDist">Eye to wall distance (m)</label><input type="number" id="ergDist" value="6" min="0" step="0.1"></div>
+   <div><label for="ergEye">Seated eye height (m)</label><input type="number" id="ergEye" value="1.20" min="0" step="0.01"></div>
+   <div><label for="ergH">Max horizontal span (°)</label><input type="number" id="ergH" value="60" min="1" max="180" step="1"></div>
+   <div><label for="ergV">Max upward angle to top (°)</label><input type="number" id="ergV" value="30" min="1" max="90" step="1"></div>
+   <div class="out span2"><label>Wall display size W × H (m), calculation panel</label><span id="oWallM">–</span></div>
+  </div>
+  <div class="hint">The wall bottom height is set on the Space requirement tab. The SIRA manual has no viewing-distance, sightline or operator-to-camera rule. Set the limits from your control room ergonomics reference (ISO 11064-4 style). The defaults are placeholders.</div>
+ </div>
+
+ <div class="ver">Version <b>V04</b> · rules from SIRA Res. 13/2025 digest · Arabic text prevails</div>
+</aside>
+
+<main class="main">
+ <div class="kpis">
+  <div class="kpi hero" id="kTotalBox"><div class="k">Wall monitors required</div><div class="v" id="kTotal">–</div><div class="s" id="kTotalS"></div></div>
+  <div class="kpi"><div class="k">Critical (static)</div><div class="v" id="kCrit">–</div><div class="s" id="kCritS"></div></div>
+  <div class="kpi"><div class="k">Sequence</div><div class="v" id="kSeq">–</div><div class="s" id="kSeqS"></div></div>
+  <div class="kpi"><div class="k">Wall grid (cols × rows)</div><div class="v" id="kGrid">–</div><div class="s" id="kGridS"></div></div>
+  <div class="kpi"><div class="k">Tile image</div><div class="v" id="kTile">–</div><div class="s">min 120 × 67 mm</div></div>
+  <div class="kpi" id="kCompBox"><div class="k">SIRA checks</div><div class="v" id="kComp">–</div><div class="s" id="kCompS"></div></div>
+ </div>
+
+ <div class="panel">
+  <div class="tabs" role="tablist">
+   <button class="tab on" data-p="pWall">Video wall</button>
+   <button class="tab" data-p="pSpace">Space requirement</button>
+   <button class="tab" data-p="pSched">Sequence schedule</button>
+   <button class="tab" data-p="pComp">Compliance</button>
+   <button class="tab" data-p="pNotes">Basis &amp; notes</button>
+  </div>
+
+  <div class="pane on" id="pWall">
+   <div class="lbar">
+    <span class="lab">Layout:</span>
+    <button class="btn sm" data-rows="1">Single row</button>
+    <button class="btn sm" data-rows="2">Double row</button>
+    <button class="btn sm" data-rows="3">Triple row</button>
+    <button class="btn sm" data-rows="4">Four rows</button>
+    <button class="btn sm" id="bEdit">✥ Edit layout (drag)</button>
+    <button class="btn sm" id="bAuto">Reset to auto</button>
+    <span class="badge" id="customBadge" style="display:none">Custom layout</span>
+   </div>
+   <div class="seqbar">
+    <button class="btn go sm" id="bPlay" onclick="togglePlay()">▶ Play sequence</button>
+    <button class="btn sm" onclick="resetSeq()">Reset</button>
+    <label class="chk" style="align-items:center"><input type="checkbox" id="fast"> Fast preview (×10)</label>
+    <span id="setPill" class="setpill" style="background:#39d353">Set 1</span>
+    <span class="stat" id="seqInfo">–</span>
+   </div>
+   <div class="legend">
+    <span><i style="background:#b5541d"></i>Critical, static</span>
+    <span><i style="background:#16707a"></i>Sequence</span>
+    <span><i style="background:#5b4bb0"></i>Map / alarm / data</span>
+    <span id="editLegend" style="display:none"><i style="border:1px dashed #8a99ab"></i>Empty slot: drop a monitor here. Drop on another monitor to swap.</span>
+   </div>
+   <div class="wallwrap" id="wallwrap"><div class="wall" id="wall"></div></div>
+   <div class="wallnote" id="wallNote"></div>
+  </div>
+
+  <div class="pane" id="pSpace">
+   <div class="spgrid">
+    <div class="subcard">
+     <h3>Monitor for space planning</h3>
+     <div class="grid">
+      <div class="span2"><label for="spSrc">Monitor size</label>
+       <select id="spSrc">
+        <option value="calc">Same as calculation panel</option>
+        <option value="32">32" standard</option><option value="43">43" standard</option><option value="46">46" standard</option>
+        <option value="49">49" standard</option><option value="50">50" standard</option><option value="55">55" standard</option>
+        <option value="65">65" standard</option><option value="75">75" standard</option><option value="86">86" standard</option>
+        <option value="manual">Manual entry (outer dimensions)</option>
+       </select></div>
+      <div><label for="spOutW">Outer width (mm)</label><input type="number" id="spOutW" value="1213.1" min="0" step="0.1"></div>
+      <div><label for="spOutH">Outer height (mm)</label><input type="number" id="spOutH" value="683.9" min="0" step="0.1"></div>
+      <div class="span2 hint" style="margin-top:-4px" id="spSrcHint"></div>
+      <div><label for="spGap">Extra gap between panels (mm)</label><input type="number" id="spGap" value="0" min="0" step="0.1"></div>
+      <div><label for="spDepth">Panel + mount depth (mm)</label><input type="number" id="spDepth" value="300" min="0" step="1"></div>
+     </div>
+     <h3 style="margin-top:14px">Heights and clearances</h3>
+     <div class="grid">
+      <div><label for="spBottom">FFL to bottom of lowest row (mm)</label><input type="number" id="spBottom" value="900" min="0" step="1"></div>
+      <div><label for="spTop">Clearance above top row (mm)</label><input type="number" id="spTop" value="300" min="0" step="1"></div>
+      <div><label for="spSide">Clearance each side (mm)</label><input type="number" id="spSide" value="300" min="0" step="1"></div>
+      <div><label for="spRear">Rear service zone (mm)</label><input type="number" id="spRear" value="0" min="0" step="1"></div>
+      <div><label for="spCeil">Available ceiling / false ceiling height (mm)</label><input type="number" id="spCeil" value="3000" min="0" step="1"></div>
+      <div><label for="spAvailW">Available wall width (mm, 0 = skip)</label><input type="number" id="spAvailW" value="0" min="0" step="1"></div>
+     </div>
+     <div class="hint">Default clearances are common practice placeholders, not a SIRA rule. Check them against the panel manufacturer's installation guide (ventilation gap, mount service access) and your ergonomics reference. Use a rear service zone only for rear-serviced walls; pop-out front-service mounts need none.</div>
+    </div>
+    <div>
+     <div class="sres">
+      <div class="out"><label>Top of wall above FFL</label><span id="sTopAFF">–</span><small id="sTopAFFs"></small></div>
+      <div class="out"><label>Ceiling height needed</label><span id="sCeilReq">–</span><small id="sCeilReqS"></small></div>
+      <div class="out"><label>Display width</label><span id="sDispW">–</span><small id="sDispWs"></small></div>
+      <div class="out"><label>Width with side clearance</label><span id="sTotW">–</span><small id="sTotWs"></small></div>
+      <div class="out"><label>Display height</label><span id="sDispH">–</span><small id="sDispHs"></small></div>
+      <div class="out"><label>Depth from wall</label><span id="sDepth">–</span><small id="sDepthS"></small></div>
+      <div class="out"><label>Tile image (this size)</label><span id="sTile">–</span><small id="sTileS"></small></div>
+      <div class="out"><label>Viewing angles</label><span id="sAng">–</span><small id="sAngS"></small></div>
+     </div>
+     <div class="elev" id="elev"></div>
+    </div>
+   </div>
+   <h3 style="font-size:12px;color:#3fa9f5;text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px">Size comparison, same layout and split <span class="ref" style="text-transform:none;letter-spacing:0">(click a row to use that size)</span></h3>
+   <div class="tblwrap"><table id="cmpTbl"></table></div>
+  </div>
+
+  <div class="pane" id="pSched">
+   <div class="hint" style="margin:0 0 10px">Each row is one sequence tile on the wall. Each column is one set. Camera numbers carry on from the last critical camera. The highlighted column is the set now playing.</div>
+   <div class="tblwrap" style="max-height:70vh;overflow-y:auto"><table class="sched" id="schedTbl"></table></div>
+  </div>
+
+  <div class="pane" id="pComp">
+   <div class="tblwrap"><table id="compTbl"></table></div>
+   <div class="hint" style="margin-top:10px">Clause references are to SIRA Administrative Resolution No. 13 of 2025, Part 1, Chapter 1, "Third: Display devices" unless stated otherwise. Page numbers are ±1 from the English text. PASS/FAIL rows are mandatory SIRA rows. REVIEW/OK rows are advisory. OPT rows are stricter than the text.</div>
+  </div>
+
+  <div class="pane notes" id="pNotes">
+   <h3>Calculation basis</h3>
+   <ul>
+    <li><b>Critical monitors</b> = ceil(critical cameras ÷ tiles per monitor). Critical cameras are static and must sit at the centre of the wall (item 9).</li>
+    <li><b>Sequence tiles</b> = ceil(normal cameras ÷ sets). <b>Sequence monitors</b> = ceil(sequence tiles ÷ tiles per monitor). The auto layout splits them between the left and right edges (item 10, "terminal areas").</li>
+    <li><b>Sets used</b> = ceil(normal cameras ÷ sequence tiles installed), never more than the sets entered. <b>Dwell</b> = cycle time ÷ sets used.</li>
+    <li><b>Camera numbering</b>: C1 to C(critical) are the static cameras. Sequence cameras continue from C(critical + 1). Set 1 holds the first block of normal cameras, set 2 the next block, and so on. Camera content follows a monitor when you drag it.</li>
+    <li><b>Tile image size</b> = active area ÷ split, unrounded. If the camera aspect ratio differs from the tile, the image is fitted inside the tile and the fitted image is checked against 120 × 67 mm.</li>
+    <li><b>Custom layout</b>: the wall grid is the bounding box of the placed monitors. Empty slots inside it count towards wall width and height (blank panel or filler). The centre check passes when no sequence monitor is closer to the wall's centre line than a critical monitor.</li>
+   </ul>
+   <h3>Space requirement basis</h3>
+   <ul>
+    <li>Outer panel size = active area + 2 × bezel per edge (standard sizes), or the outer size you enter (manual).</li>
+    <li>Display width = columns × outer width + (columns − 1) × extra gap. Display height likewise with rows.</li>
+    <li>Top of wall above FFL = FFL to bottom of lowest row + display height. Ceiling needed = top of wall + clearance above.</li>
+    <li>Overall width = display width + 2 × side clearance. Depth = panel and mount depth + rear service zone.</li>
+    <li>Clearance defaults (300 mm above, 300 mm each side) are planning placeholders, not a SIRA or ISO figure. Replace them with the manufacturer's and your reference's values.</li>
+   </ul>
+   <h3>How the SIRA rules are read here</h3>
+   <ul>
+    <li>The 12 × 6.7 cm minimum is in the Remarks of item 5, the wall monitor row. This tool applies it to the <b>video wall</b>. It is not clearly required for the 21" workstation monitors (item 8). Tick the option on the Operators tab to apply it there too, as a stricter design choice.</li>
+    <li>Item 11 limits "the thickness of the outer frame of wall monitors" to 4 mm. This tool reads that as the bezel on each edge. If SIRA reads it as the bezel-to-bezel gap, the limit is effectively 2 mm per edge.</li>
+    <li>Sequencing: at most 6 sets, full cycle at most 60 s. The law sets no minimum dwell and no camera-to-tile ratio.</li>
+    <li>Item 7 remark: sites with no operations room and fewer than 64 cameras or fewer than 4 recorders may use one screen with a KVM. The "or" probably means "and"; the Arabic text decides.</li>
+    <li>The manual has no operator-to-camera ratio, no viewing-distance rule and no wall clearance rule. Ergonomic and space rows are advisory only.</li>
+   </ul>
+   <h3>Pages to confirm on the official PDF</h3>
+   <ul>
+    <li>p.11–12: the 12 × 6.7 cm remark splits across a page break in the text extraction.</li>
+    <li>p.24–26: field-of-view percentages (not used in this calculator).</li>
+   </ul>
+  </div>
+ </div>
+</main>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- constants ---------- */
+var PRESETS = { "32":[698.4,392.9], "43":[941.2,529.4], "46":[1018.1,572.7], "49":[1073.8,604.0],
+                "50":[1095.8,616.4], "55":[1209.6,680.4], "65":[1428.5,803.5], "75":[1650.2,928.3], "86":[1895.0,1065.9] };
+var SIZES = ["32","43","46","49","50","55","65","75","86"];
+var SET_COLORS = ["#39d353","#38c6f4","#f472d0","#f5d63d","#ff7b5c","#b18cff"];
+var MIN_W = 120, MIN_H = 67, MAX_BEZEL = 4, MAX_SETS = 6, MAX_CYCLE = 60;
+var REF = {
+  tile:"Display item 5 (p.11–12)", bezel:"Display item 11 (p.12)", all:"Display item 7 (p.12)",
+  crit:"Display item 9 (p.12)", seq:"Display item 10 (p.12)", res:"Display item 2 (p.11)",
+  r247:"Display item 1 (p.11)", surv:"Display item 3 (p.11)", ws:"Display items 4, 8 (p.11–12)",
+  aspect:"Display item 8 (p.12)", vms:"Seventh, item 1 (p.13)", small:"Display item 7 remark (p.12)",
+  moc:"Part 3, Ch 39 (p.133–134)", ratio:"Not in manual (digest §8)"
+};
+var FIELDS = ["pName","facility","recorders","roomArea","manager","camTotal","critMode","critVal","camAspect",
+  "seqSets","seqCycle","wallSize","bezel","actW","actH","tileCols","tileRows","wallRows","mapMon","wallRes",
+  "chk247","chkSurv","opCount","wsPerOp","wsSize","wsRes","wsRule","wsCols","wsRows",
+  "ergDist","ergEye","ergH","ergV",
+  "spSrc","spOutW","spOutH","spGap","spDepth","spBottom","spTop","spSide","spRear","spCeil","spAvailW"];
+var FIELD_TAB = {pName:"sProj",facility:"sProj",recorders:"sProj",roomArea:"sProj",
+  camTotal:"sCam",critVal:"sCam",seqSets:"sSeq",seqCycle:"sSeq",bezel:"sWall",actW:"sWall",actH:"sWall",tileCols:"sWall",
+  tileRows:"sWall",wallRows:"sWall",mapMon:"sWall",opCount:"sWs",wsPerOp:"sWs",wsSize:"sWs",wsCols:"sWs",wsRows:"sWs",
+  ergDist:"sErg",ergEye:"sErg",ergH:"sErg",ergV:"sErg"};
+
+function $(id){ return document.getElementById(id); }
+function fmt(n,d){ return (Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d); }
+function mm(n){ return Math.round(n).toLocaleString("en-US") + " mm"; }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+
+/* ---------- state ---------- */
+var R = null, defaults = {};
+var play = false, setIdx = 0, elapsed = 0, timer = null;
+var seqTileEls = [];
+var layout = {}, layoutSig = "", layoutCustom = false, pendingLayout = null, editMode = false;
+
+/* ---------- input reading / validation ---------- */
+var errs = [], badTabs = {};
+function mark(id, bad){ $(id).classList.toggle("bad", !!bad); if(bad && FIELD_TAB[id]) badTabs[FIELD_TAB[id]] = true; }
+function readInt(id, label, min, max){
+  var raw = String($(id).value).trim();
+  var ok = /^\d+$/.test(raw);
+  var v = ok ? parseInt(raw,10) : NaN;
+  if(!ok){ errs.push(label + ": enter a whole number" + (min>0 ? " of at least " + min : " (0 or more)") + "."); mark(id,true); return NaN; }
+  if(v < min || (max != null && v > max)){
+    errs.push(label + ": must be " + (max != null ? "between " + min + " and " + max : "at least " + min) + "."); mark(id,true); return NaN; }
+  mark(id,false); return v;
+}
+function readNum(id, label, max, allowZero){
+  var raw = String($(id).value).trim();
+  var ok = /^\d+(\.\d+)?$|^\.\d+$/.test(raw);
+  var v = ok ? parseFloat(raw) : NaN;
+  if(!ok){ errs.push(label + ": enter a number (no negatives)."); mark(id,true); return NaN; }
+  if((!allowZero && v <= 0) || (max != null && v > max)){
+    errs.push(label + ": must be " + (allowZero ? "" : "greater than 0") + (max != null ? (allowZero?"":" and ") + "no more than " + max : "") + "."); mark(id,true); return NaN; }
+  mark(id,false); return v;
+}
+
+function readAll(){
+  errs = []; badTabs = {};
+  var I = {};
+  I.pName = $("pName").value.trim();
+  I.facility = $("facility").value;
+  I.recorders = readInt("recorders","Recording devices",0,null);
+  I.manager = $("manager").checked;
+  I.roomArea = I.facility === "moc" ? readNum("roomArea","Ops room area",null,true) : 0;
+  if(I.facility !== "moc") mark("roomArea", false);
+  I.camTotal = readInt("camTotal","Total cameras",0,null);
+  I.critMode = $("critMode").value;
+  if(I.critMode === "pct"){ I.critVal = readInt("critVal","Critical cameras (%)",0,100); }
+  else {
+    I.critVal = readInt("critVal","Critical cameras (quantity)",0,null);
+    if(!isNaN(I.critVal) && !isNaN(I.camTotal) && I.critVal > I.camTotal){
+      errs.push("Critical cameras (" + I.critVal + ") cannot exceed total cameras (" + I.camTotal + ")."); mark("critVal",true); I.critVal = NaN; }
+  }
+  I.camAspect = parseFloat($("camAspect").value);
+  I.camAspectLbl = $("camAspect").options[$("camAspect").selectedIndex].text;
+  I.seqSets = readInt("seqSets","Sets per cycle",1,MAX_SETS);
+  I.seqCycle = readInt("seqCycle","Total cycle time",1,MAX_CYCLE);
+  I.wallSize = $("wallSize").value;
+  I.bezel = readNum("bezel","Bezel per edge",null,true);
+  I.actW = readNum("actW","Active area width",null,false);
+  I.actH = readNum("actH","Active area height",null,false);
+  I.tileCols = readInt("tileCols","Split columns",1,10);
+  I.tileRows = readInt("tileRows","Split rows",1,10);
+  I.wallRows = readInt("wallRows","Auto layout rows",1,8);
+  I.mapMon = readInt("mapMon","Map / data monitors",0,null);
+  I.wallRes = parseInt($("wallRes").value,10);
+  I.chk247 = $("chk247").checked; I.chkSurv = $("chkSurv").checked;
+  I.opCount = readInt("opCount","Operators per shift",0,null);
+  I.wsPerOp = readInt("wsPerOp","Monitors per operator",0,null);
+  I.wsSize = readNum("wsSize","Workstation monitor size",null,true);
+  I.wsRes = parseInt($("wsRes").value,10);
+  I.wsRule = $("wsRule").checked;
+  if(I.wsRule){ I.wsCols = readInt("wsCols","Workstation split columns",1,10); I.wsRows = readInt("wsRows","Workstation split rows",1,10); }
+  else { mark("wsCols",false); mark("wsRows",false); I.wsCols = parseInt($("wsCols").value,10)||1; I.wsRows = parseInt($("wsRows").value,10)||1; }
+  I.ergDist = readNum("ergDist","Eye to wall distance",null,false);
+  I.ergEye = readNum("ergEye","Seated eye height",null,true);
+  I.ergH = readNum("ergH","Max horizontal span",180,false);
+  I.ergV = readNum("ergV","Max upward angle",90,false);
+  I.spSrc = $("spSrc").value;
+  if(I.spSrc === "manual"){ I.spOutW = readNum("spOutW","Space: outer width",null,false); I.spOutH = readNum("spOutH","Space: outer height",null,false); }
+  else { mark("spOutW",false); mark("spOutH",false); }
+  I.spGap = readNum("spGap","Space: extra gap",null,true);
+  I.spDepth = readNum("spDepth","Space: panel + mount depth",null,true);
+  I.spBottom = readNum("spBottom","Space: FFL to bottom of wall",null,true);
+  I.spTop = readNum("spTop","Space: clearance above",null,true);
+  I.spSide = readNum("spSide","Space: side clearance",null,true);
+  I.spRear = readNum("spRear","Space: rear service zone",null,true);
+  I.spCeil = readNum("spCeil","Space: available ceiling height",null,true);
+  I.spAvailW = readNum("spAvailW","Space: available wall width",null,true);
+  return I;
+}
+
+/* ---------- core calculation ---------- */
+function compute(I){
+  var r = { I:I };
+  r.crit = I.critMode === "pct" ? Math.round(I.camTotal * I.critVal / 100) : I.critVal;
+  r.crit = Math.min(r.crit, I.camTotal);
+  r.norm = I.camTotal - r.crit;
+  r.tpm = I.tileCols * I.tileRows;
+  r.critMon = r.crit > 0 ? Math.ceil(r.crit / r.tpm) : 0;
+  r.seqTilesNeeded = r.norm > 0 ? Math.ceil(r.norm / I.seqSets) : 0;
+  r.seqMon = r.seqTilesNeeded > 0 ? Math.ceil(r.seqTilesNeeded / r.tpm) : 0;
+  r.seqTiles = r.seqMon * r.tpm;
+  r.setsUsed = r.norm > 0 ? Math.ceil(r.norm / r.seqTiles) : 0;
+  r.dwell = r.setsUsed > 0 ? I.seqCycle / r.setsUsed : 0;
+  r.camMon = r.critMon + r.seqMon;
+  r.totalMon = r.camMon + I.mapMon;
+  r.capStatic = r.critMon * r.tpm;
+  r.capSeq = r.seqTiles * I.seqSets;
+
+  var fit = fitImage(I.actW, I.actH, I);
+  r.tileW = fit.tw; r.tileH = fit.th; r.imgW = fit.iw; r.imgH = fit.ih; r.tileAspect = fit.ta;
+  r.aspectDev = Math.abs(fit.ta - I.camAspect) / I.camAspect;
+  r.tileOk = fit.ok;
+
+  // monitors
+  r.mons = [];
+  var i;
+  for(i=0;i<r.critMon;i++) r.mons.push({key:"C"+(i+1), type:"crit", n:i+1, order:i});
+  for(i=0;i<r.seqMon;i++) r.mons.push({key:"S"+(i+1), type:"seq", n:i+1, order:i});
+  for(i=0;i<I.mapMon;i++) r.mons.push({key:"M"+(i+1), type:"map", n:i+1});
+
+  applyLayout(r);
+
+  // physical wall (calculation panel)
+  r.monW = I.actW + 2*I.bezel; r.monH = I.actH + 2*I.bezel;
+  r.wallW = r.cols * r.monW / 1000; r.wallH = r.rows * r.monH / 1000;
+  var ang = angles(r.wallW, r.wallH, I);
+  r.hAngle = ang.h; r.vAngle = ang.v;
+  r.tileAngle = Math.atan((r.imgH/1000) / I.ergDist) * 180/Math.PI;
+
+  // workstations
+  r.wsTotal = I.opCount * I.wsPerOp;
+  var wsW = I.wsSize * 25.4 * 16 / Math.sqrt(337), wsH = wsW * 9/16;
+  var wf = fitImage(wsW, wsH, {tileCols:I.wsCols, tileRows:I.wsRows, camAspect:I.camAspect});
+  r.wsImgW = wf.iw; r.wsImgH = wf.ih;
+
+  r.space = spaceFor(r, I.spSrc);
+  r.checks = buildChecks(r);
+  return r;
+}
+
+function fitImage(aw, ah, I){
+  var tw = aw / I.tileCols, th = ah / I.tileRows, ta = tw / th, iw, ih;
+  if(I.camAspect >= ta){ iw = tw; ih = tw / I.camAspect; } else { ih = th; iw = th * I.camAspect; }
+  return {tw:tw, th:th, ta:ta, iw:iw, ih:ih, ok: iw >= MIN_W && ih >= MIN_H};
+}
+function angles(wM, hM, I){
+  if(wM <= 0) return {h:0, v:0};
+  return { h: 2*Math.atan((wM/2)/I.ergDist)*180/Math.PI,
+           v: Math.atan(((I.spBottom/1000) + hM - I.ergEye)/I.ergDist)*180/Math.PI };
+}
+
+/* ---------- layout ---------- */
+function autoLayout(r, rows){
+  var L = {}, leftSeq = Math.floor(r.seqMon/2), rightSeq = r.seqMon - leftSeq;
+  var centre = r.mons.filter(function(m){ return m.type !== "seq"; });
+  var seqs = r.mons.filter(function(m){ return m.type === "seq"; });
+  var lCols = Math.ceil(leftSeq/rows), cCols = Math.ceil(centre.length/rows), rCols = Math.ceil(rightSeq/rows);
+  function fill(x0, w, items){ var n=0; for(var y=0;y<rows;y++) for(var x=x0;x<x0+w;x++){ if(n<items.length){ L[items[n].key]={x:x,y:y}; n++; } } }
+  fill(0, lCols, seqs.slice(0,leftSeq)); fill(lCols, cCols, centre); fill(lCols+cCols, rCols, seqs.slice(leftSeq));
+  return L;
+}
+function applyLayout(r){
+  var I = r.I, sig = r.critMon + "-" + r.seqMon + "-" + I.mapMon + "-" + I.wallRows;
+  if(pendingLayout){
+    var okAll = r.mons.every(function(m){ return pendingLayout[m.key]; });
+    if(okAll){ layout = pendingLayout; layoutCustom = true; layoutSig = sig; }
+    pendingLayout = null;
+  }
+  if(sig !== layoutSig || r.mons.some(function(m){ return !layout[m.key]; })){
+    layout = autoLayout(r, I.wallRows); layoutSig = sig; layoutCustom = false;
+  }
+  // normalise to the bounding box
+  var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  r.mons.forEach(function(m){ var p=layout[m.key]; minX=Math.min(minX,p.x); minY=Math.min(minY,p.y); maxX=Math.max(maxX,p.x); maxY=Math.max(maxY,p.y); });
+  var nl = {};
+  r.mons.forEach(function(m){ var p=layout[m.key]; nl[m.key]={x:p.x-minX, y:p.y-minY}; });
+  layout = nl;
+  r.cols = r.mons.length ? maxX-minX+1 : 0;
+  r.rows = r.mons.length ? maxY-minY+1 : 0;
+  r.grid = [];
+  for(var y=0;y<r.rows;y++){ r.grid.push([]); for(var x=0;x<r.cols;x++) r.grid[y].push(null); }
+  r.mons.forEach(function(m){ var p=layout[m.key]; m.x=p.x; m.y=p.y; r.grid[p.y][p.x]=m; });
+  r.positions = r.rows * r.cols;
+  r.empty = r.positions - r.mons.length;
+  r.custom = layoutCustom;
+  // centre rule: no sequence monitor closer to the centre line than a critical monitor
+  var cx = r.cols/2, critMax = -1, seqMin = Infinity;
+  r.mons.forEach(function(m){ var d=Math.abs(m.x+0.5-cx); if(m.type==="crit") critMax=Math.max(critMax,d); if(m.type==="seq") seqMin=Math.min(seqMin,d); });
+  r.centreOk = r.critMon===0 || r.seqMon===0 || critMax <= seqMin + 1e-9;
+}
+
+function camNoCrit(k){ return k + 1; }
+function camNoSeq(r, s, k){ var idx = s * r.seqTiles + k; return idx < r.norm ? r.crit + idx + 1 : 0; }
+
+/* ---------- space requirement ---------- */
+function panelFor(r, src){
+  var I = r.I, aw, ah, ow, oh, label;
+  if(src === "calc"){ aw=I.actW; ah=I.actH; ow=aw+2*I.bezel; oh=ah+2*I.bezel; label = (I.wallSize==="custom"?"Custom":I.wallSize+'"')+" (calculation)"; }
+  else if(src === "manual"){ ow=I.spOutW; oh=I.spOutH; aw=Math.max(0.1,ow-2*I.bezel); ah=Math.max(0.1,oh-2*I.bezel); label="Manual "+fmt(ow,1)+" × "+fmt(oh,1)+" mm"; }
+  else { aw=PRESETS[src][0]; ah=PRESETS[src][1]; ow=aw+2*I.bezel; oh=ah+2*I.bezel; label=src+'" standard'; }
+  return {aw:aw, ah:ah, ow:ow, oh:oh, label:label};
+}
+function spaceFor(r, src){
+  var I = r.I, p = panelFor(r, src), s = {src:src, p:p};
+  s.dispW = r.cols ? r.cols*p.ow + (r.cols-1)*I.spGap : 0;
+  s.dispH = r.rows ? r.rows*p.oh + (r.rows-1)*I.spGap : 0;
+  s.topAFF = I.spBottom + s.dispH;
+  s.ceilReq = s.topAFF + I.spTop;
+  s.totW = s.dispW + 2*I.spSide;
+  s.depth = I.spDepth + I.spRear;
+  s.ceilOk = I.spCeil <= 0 ? null : s.ceilReq <= I.spCeil;
+  s.widthOk = I.spAvailW <= 0 ? null : s.totW <= I.spAvailW;
+  s.fit = fitImage(p.aw, p.ah, I);
+  var a = angles(s.dispW/1000, s.dispH/1000, I);
+  s.hAngle = a.h; s.vAngle = a.v;
+  return s;
+}
+
+/* ---------- compliance ---------- */
+function buildChecks(r){
+  var I = r.I, c = [];
+  function add(group, check, value, req, ref, st){ c.push({group:group, check:check, value:value, req:req, ref:ref, st:st}); }
+  var hasWall = r.camMon > 0;
+  add("SIRA","Wall tile image size", hasWall ? fmt(r.imgW,1)+" × "+fmt(r.imgH,1)+" mm (tile "+fmt(r.tileW,1)+" × "+fmt(r.tileH,1)+")" : "No wall monitors",
+      "≥ 120 × 67 mm per camera image, on wall monitors", REF.tile, hasWall ? (r.tileOk?"PASS":"FAIL") : "INFO");
+  add("SIRA","Wall monitor outer frame", fmt(I.bezel,2)+" mm per edge ("+fmt(2*I.bezel,2)+" mm bezel-to-bezel)",
+      "≤ 4 mm (read as per edge)", REF.bezel, I.bezel <= MAX_BEZEL ? "PASS":"FAIL");
+  add("SIRA","All cameras displayable", "Static capacity "+r.capStatic+" ≥ "+r.crit+"; sequence capacity "+r.capSeq+" ≥ "+r.norm,
+      "Monitors must display all camera feeds", REF.all, (r.capStatic>=r.crit && r.capSeq>=r.norm)?"PASS":"FAIL");
+  add("SIRA","Critical cameras static at wall centre", r.crit+" cameras on "+r.critMon+" monitor(s)"+(r.centreOk?", nearest the centre line":". A sequence monitor sits closer to the centre than a critical monitor"),
+      "Always displayed at centre of wall", REF.crit, r.centreOk?"PASS":"FAIL");
+  add("SIRA","Sequencing limits", r.norm>0 ? r.setsUsed+" set(s) used of "+I.seqSets+" allowed, cycle "+I.seqCycle+" s, dwell "+fmt(r.dwell,1)+" s" : "No normal cameras",
+      "≤ 6 sets, total cycle ≤ 60 s, normal cameras at wall edges", REF.seq, (r.setsUsed<=MAX_SETS && I.seqCycle<=MAX_CYCLE)?"PASS":"FAIL");
+  add("SIRA","Wall panel resolution", I.wallRes+"p", "≥ Full HD 1080p", REF.res, I.wallRes>=1080?"PASS":"FAIL");
+  add("SIRA","Workstation monitor resolution", I.wsRes+"p", "≥ Full HD 1080p", REF.res, I.wsRes>=1080?"PASS":"FAIL");
+  add("SIRA","24/7 continuous rating", I.chk247?"Confirmed":"Not confirmed", "Continuous 24/7/365, ≥ 3 years", REF.r247, I.chk247?"PASS":"FAIL");
+  add("SIRA","Surveillance-grade displays", I.chkSurv?"Confirmed":"Not confirmed", "Surveillance monitors, not TVs", REF.surv, I.chkSurv?"PASS":"FAIL");
+  var wsOk = I.wsPerOp >= 2 && I.wsSize >= 21;
+  add("SIRA","Operator workstation monitors", I.opCount+" operator(s) × "+I.wsPerOp+" × "+fmt(I.wsSize,1)+'" = '+r.wsTotal+" monitors",
+      "≥ 2 monitors per operator, each ≥ 21\"", REF.ws, I.opCount===0 ? "INFO" : (wsOk?"PASS":"FAIL"));
+  add("Advisory","Camera vs tile aspect ratio", "Camera "+I.camAspectLbl+", wall tile "+fmt(r.tileAspect,2)+":1"+(r.aspectDev>0.05?" ("+Math.round((1-(r.imgW*r.imgH)/(r.tileW*r.tileH))*100)+"% of tile unused)":""),
+      "Display aspect compatible with camera (4:3, 16:9, 16:10)", REF.aspect, r.aspectDev<=0.05?"OK":"REVIEW");
+  if(I.wsRule){
+    var wok = r.wsImgW>=MIN_W && r.wsImgH>=MIN_H;
+    add("Optional","Workstation tile image size", fmt(r.wsImgW,1)+" × "+fmt(r.wsImgH,1)+" mm at "+I.wsCols+"×"+I.wsRows+" (from nominal "+fmt(I.wsSize,1)+'")',
+        "≥ 120 × 67 mm. Stricter than the text; not clearly required", REF.tile, wok?"OPT":"REVIEW");
+  }
+  var vms = I.camTotal >= 64 || I.recorders >= 4;
+  add("Info","VMS required", vms?"Yes ("+I.camTotal+" cameras, "+I.recorders+" recorders)":"No", "Mandatory at ≥ 64 cameras or ≥ 4 recorders", REF.vms, "INFO");
+  if(I.camTotal < 64 && I.recorders < 4){
+    add("Info","Small-site exemption", "May apply", "No ops room and < 64 cameras / < 4 recorders: one screen + KVM allowed", REF.small, "INFO");
+  }
+  if(I.facility === "moc"){
+    var staffOk = I.opCount >= 2 && I.manager;
+    add("SIRA","Monitoring centre staffing", I.opCount+" operator(s)"+(I.manager?" + room manager":", no manager"), "≥ 2 staff in addition to the room manager, 24/7", REF.moc, staffOk?"PASS":"FAIL");
+    add("SIRA","Monitoring centre room area", fmt(I.roomArea,1)+" m² ("+Math.round(I.roomArea*10.7639)+" sq ft)", "≥ 300 sq ft (27.9 m²)", REF.moc, I.roomArea*10.7639 >= 300 ? "PASS":"FAIL");
+  }
+  add("Info","Operator-to-camera ratio", I.opCount>0 ? Math.round(I.camTotal/I.opCount)+" cameras per operator" : "–", "No ratio in the manual. Set by design judgement", REF.ratio, "INFO");
+  if(r.cols>0){
+    add("Advisory","Horizontal span of wall", fmt(r.hAngle,1)+"° at "+fmt(I.ergDist,1)+" m (wall "+fmt(r.wallW,2)+" m wide)", "≤ "+fmt(I.ergH,0)+"° (your limit)", "Ergonomics reference", r.hAngle<=I.ergH?"OK":"REVIEW");
+    add("Advisory","Upward angle to top of wall", fmt(r.vAngle,1)+"° (top at "+fmt((I.spBottom/1000)+r.wallH,2)+" m)", "≤ "+fmt(I.ergV,0)+"° above eye line (your limit)", "Ergonomics reference", r.vAngle<=I.ergV?"OK":"REVIEW");
+    add("Advisory","Camera image angular height", fmt(r.tileAngle,2)+"° ("+fmt(r.tileAngle*60,0)+" arcmin) per tile", "For judgement against your reference", "Ergonomics reference", "INFO");
+    var s = r.space;
+    if(s.ceilOk !== null) add("Space","Ceiling height for wall", mm(s.ceilReq)+" needed ("+s.p.label+")", "≤ available "+mm(I.spCeil), "Space requirement tab", s.ceilOk?"OK":"REVIEW");
+    if(s.widthOk !== null) add("Space","Wall width with clearances", mm(s.totW)+" needed", "≤ available "+mm(I.spAvailW), "Space requirement tab", s.widthOk?"OK":"REVIEW");
+  }
+  return c;
+}
+
+/* ---------- render ---------- */
+function setText(id, t){ $(id).textContent = t; }
+
+function render(){
+  var I = readAll();
+  $("critLbl").textContent = I.critMode === "pct" ? "Critical cameras (%)" : "Critical cameras (quantity)";
+  var moc = $("facility").value === "moc";
+  $("mocRow1").style.display = moc ? "" : "none"; $("mocRow2").style.display = moc ? "" : "none";
+  var wsr = $("wsRule").checked;
+  $("wsSplitRow1").style.display = wsr ? "" : "none"; $("wsSplitRow2").style.display = wsr ? "" : "none";
+  var b = parseFloat($("bezel").value); setText("oB2B", isNaN(b) ? "–" : fmt(2*b,2));
+  var tabs = document.querySelectorAll(".stab");
+  for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle("err", !!badTabs[tabs[i].getAttribute("data-s")]);
+  var man = $("spSrc").value === "manual";
+  $("spOutW").disabled = !man; $("spOutH").disabled = !man;
+
+  if(errs.length){
+    $("errbox").style.display = "block";
+    $("errlist").innerHTML = errs.map(function(e){return "<li>"+esc(e)+"</li>";}).join("");
+    R = null; blankResults(); return;
+  }
+  $("errbox").style.display = "none";
+  R = compute(I);
+  if(setIdx >= Math.max(1,R.setsUsed)) setIdx = 0;
+
+  setText("oCrit", R.crit); setText("oNorm", R.norm);
+  setText("oSetsUsed", R.norm>0 ? R.setsUsed + " of " + I.seqSets : "–");
+  setText("oDwell", R.norm>0 ? fmt(R.dwell,1) + " s" : "–");
+  setText("oTile", fmt(R.imgW,1) + " × " + fmt(R.imgH,1));
+  setText("oWs", R.wsTotal);
+  setText("oWallM", R.cols>0 ? fmt(R.wallW,2) + " × " + fmt(R.wallH,2) : "–");
+
+  setText("kTotal", R.totalMon);
+  setText("kTotalS", R.camMon + " camera" + (I.mapMon ? " + " + I.mapMon + " map/data" : "") + (R.empty>0 ? " · " + R.empty + " empty slot(s)" : ""));
+  setText("kCrit", R.critMon); setText("kCritS", R.crit + " cams · capacity " + R.capStatic);
+  setText("kSeq", R.seqMon); setText("kSeqS", R.seqTiles + " tiles · " + (R.norm>0 ? R.setsUsed + " sets · " + fmt(R.dwell,1) + " s dwell" : "no normal cams"));
+  setText("kGrid", R.cols>0 ? R.cols + " × " + R.rows : "–"); setText("kGridS", (R.custom ? "custom · " : "auto · ") + (I.wallSize==="custom" ? "custom panel" : I.wallSize + '"') + " · " + I.tileCols + "×" + I.tileRows + " split");
+  setText("kTile", fmt(R.imgW,0) + "×" + fmt(R.imgH,0));
+
+  var fails = R.checks.filter(function(c){return c.st==="FAIL";}).length;
+  var passes = R.checks.filter(function(c){return c.st==="PASS";}).length;
+  var reviews = R.checks.filter(function(c){return c.st==="REVIEW";}).length;
+  setText("kComp", fails ? fails + " FAIL" : "PASS");
+  setText("kCompS", passes + " passed" + (reviews ? " · " + reviews + " to review" : ""));
+  $("kCompBox").className = "kpi " + (fails ? "badk" : "hero");
+
+  $("customBadge").style.display = R.custom ? "" : "none";
+  var rb = document.querySelectorAll("[data-rows]");
+  for(var j=0;j<rb.length;j++) rb[j].classList.toggle("on", !R.custom && +rb[j].getAttribute("data-rows") === I.wallRows);
+
+  drawWall(); drawSched(); drawComp(); drawSpace(); updateSeqUI();
+}
+
+function blankResults(){
+  ["oCrit","oNorm","oSetsUsed","oDwell","oTile","oWs","oWallM","kTotal","kCrit","kSeq","kGrid","kTile","kComp",
+   "sTopAFF","sCeilReq","sDispW","sTotW","sDispH","sDepth","sTile","sAng"].forEach(function(id){ setText(id,"–"); });
+  ["kTotalS","kCritS","kSeqS","kGridS","kCompS","sTopAFFs","sCeilReqS","sDispWs","sTotWs","sDispHs","sDepthS","sTileS","sAngS"].forEach(function(id){ setText(id,""); });
+  $("kCompBox").className = "kpi badk";
+  $("wall").innerHTML = ""; $("wallNote").textContent = "Fix the highlighted inputs to see the wall.";
+  $("schedTbl").innerHTML = ""; $("compTbl").innerHTML = ""; $("elev").innerHTML = ""; $("cmpTbl").innerHTML = "";
+  seqTileEls = []; stopTimer(); play = false; updatePlayBtn();
+}
+
+/* ---------- wall drawing + drag ---------- */
+function drawWall(){
+  var r = R, I = r.I, wall = $("wall");
+  wall.innerHTML = ""; seqTileEls = [];
+  wall.classList.toggle("edit", editMode);
+  $("editLegend").style.display = editMode ? "" : "none";
+  $("bEdit").classList.toggle("on", editMode);
+  if(r.mons.length === 0){ $("wallNote").textContent = "No cameras entered, so no wall monitors are needed."; wall.style.width="auto"; return; }
+  if(r.positions > 300 || r.positions*r.tpm > 25000){ $("wallNote").textContent = "The wall is too large to draw (" + r.positions + " positions). The numbers, schedule and report are still correct."; return; }
+
+  var pad = editMode ? 1 : 0;
+  var gc = r.cols + 2*pad, gr = r.rows + 2*pad;
+  var gap = editMode ? 8 : 5;
+  var avail = $("wallwrap").clientWidth - 20;
+  var monPx = Math.max(editMode ? 110 : 140, (avail - (gc-1)*gap) / gc);
+  var tagPx = 17, monHpx = monPx * I.actH / I.actW;
+  wall.style.gridTemplateColumns = "repeat(" + gc + "," + monPx + "px)";
+  wall.style.gridAutoRows = (monHpx + tagPx + 2) + "px";
+  wall.style.gap = gap + "px";
+  wall.style.width = (gc*monPx + (gc-1)*gap + 18) + "px";
+  wall.style.fontSize = Math.max(7, Math.min(13, (monPx / I.tileCols) * 0.22)) + "px";
+
+  var frag = document.createDocumentFragment();
+  for(var gy=0; gy<gr; gy++) for(var gx=0; gx<gc; gx++){
+    var x = gx - pad, y = gy - pad;
+    var slot = document.createElement("div"); slot.className = "slot";
+    slot.setAttribute("data-x", x); slot.setAttribute("data-y", y);
+    var m = (x>=0 && y>=0 && x<r.cols && y<r.rows) ? r.grid[y][x] : null;
+    if(m) slot.appendChild(buildMon(m, monHpx));
+    frag.appendChild(slot);
+  }
+  wall.appendChild(frag);
+  paintSeq();
+  var note = "Wall " + r.cols + " × " + r.rows + " monitors, " + fmt(r.wallW,2) + " m × " + fmt(r.wallH,2) + " m with " + fmt(I.bezel*2,2) + " mm bezel-to-bezel. ";
+  if(r.empty > 0) note += r.empty + " empty slot(s) inside the wall outline: fill with blank panels or spare monitors. ";
+  if(!r.centreOk) note += "Warning: a sequence monitor is closer to the centre than a critical monitor (item 9). ";
+  note += editMode ? "Drag a monitor to an empty slot to move it, or onto another monitor to swap. The dashed ring lets you extend the wall." : "Click ‘Edit layout’ to rearrange monitors with the mouse or finger.";
+  $("wallNote").textContent = note;
+}
+
+function buildMon(cell, monHpx){
+  var r = R, I = r.I;
+  var m = document.createElement("div");
+  m.className = "mon " + cell.type; m.setAttribute("data-key", cell.key);
+  var tag = document.createElement("div"); tag.className = "tag";
+  tag.textContent = cell.type === "crit" ? "CRITICAL " + cell.n : cell.type === "seq" ? "SEQ " + cell.n : "MAP / DATA " + cell.n;
+  m.appendChild(tag);
+  if(cell.type === "map"){
+    var f = document.createElement("div"); f.className = "mapface"; f.style.height = monHpx + "px";
+    f.textContent = "Maps · alarms · data (item 11)"; m.appendChild(f); return m;
+  }
+  var ts = document.createElement("div"); ts.className = "tiles"; ts.style.height = monHpx + "px";
+  ts.style.gridTemplateColumns = "repeat(" + I.tileCols + ",1fr)";
+  ts.style.gridTemplateRows = "repeat(" + I.tileRows + ",1fr)";
+  for(var j=0;j<r.tpm;j++){
+    var t = document.createElement("div"); t.className = "t";
+    var k = cell.order * r.tpm + j;
+    if(cell.type === "crit"){ var cn = k < r.crit ? camNoCrit(k) : 0; t.textContent = cn ? "C" + cn : "–"; if(!cn) t.classList.add("empty"); }
+    else seqTileEls.push({el:t, k:k});
+    ts.appendChild(t);
+  }
+  m.appendChild(ts);
+  return m;
+}
+
+var drag = null;
+function onDown(e){
+  if(!editMode || !R) return;
+  var mon = e.target.closest ? e.target.closest(".mon") : null;
+  if(!mon) return;
+  e.preventDefault();
+  var rect = mon.getBoundingClientRect();
+  var g = mon.cloneNode(true); g.classList.add("ghost");
+  g.style.width = rect.width + "px"; g.style.left = rect.left + "px"; g.style.top = rect.top + "px";
+  g.style.fontSize = getComputedStyle($("wall")).fontSize;
+  document.body.appendChild(g);
+  drag = {key: mon.getAttribute("data-key"), g:g, dx:e.clientX-rect.left, dy:e.clientY-rect.top, hot:null};
+  mon.style.opacity = ".3";
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
+}
+function slotAt(x, y){ var el = document.elementFromPoint(x, y); return el && el.closest ? el.closest(".slot") : null; }
+function onMove(e){
+  if(!drag) return;
+  drag.g.style.left = (e.clientX - drag.dx) + "px"; drag.g.style.top = (e.clientY - drag.dy) + "px";
+  var s = slotAt(e.clientX, e.clientY);
+  if(drag.hot && drag.hot !== s) drag.hot.classList.remove("hot");
+  if(s){ s.classList.add("hot"); } drag.hot = s;
+}
+function onUp(e){
+  window.removeEventListener("pointermove", onMove);
+  window.removeEventListener("pointerup", onUp);
+  window.removeEventListener("pointercancel", onUp);
+  if(!drag) return;
+  var s = slotAt(e.clientX, e.clientY);
+  drag.g.parentNode.removeChild(drag.g);
+  var key = drag.key; drag = null;
+  if(s){
+    var x = +s.getAttribute("data-x"), y = +s.getAttribute("data-y"), from = layout[key];
+    var other = null;
+    for(var k in layout) if(layout[k].x === x && layout[k].y === y) other = k;
+    if(other !== key){
+      if(other) layout[other] = {x:from.x, y:from.y};
+      layout[key] = {x:x, y:y};
+      layoutCustom = true;
+    }
+  }
+  render();
+}
+
+function paintSeq(){
+  if(!R) return;
+  var col = SET_COLORS[setIdx % SET_COLORS.length];
+  for(var i=0;i<seqTileEls.length;i++){
+    var o = seqTileEls[i], cn = camNoSeq(R, setIdx, o.k);
+    o.el.textContent = cn ? "C" + cn : "–";
+    o.el.style.color = cn ? col : "#3a4654";
+  }
+}
+
+/* ---------- schedule + compliance tables ---------- */
+function drawSched(){
+  var r = R, tb = $("schedTbl");
+  if(r.seqTiles === 0){ tb.innerHTML = "<tr><td>No sequenced cameras.</td></tr>"; return; }
+  var n = r.setsUsed, h = "<thead><tr><th>Tile</th>";
+  for(var s=0;s<n;s++) h += '<th class="sc'+s+'" style="color:'+SET_COLORS[s]+'">Set '+(s+1)+'</th>';
+  h += "</tr></thead><tbody>";
+  var limit = Math.min(r.seqTiles, 1500);
+  for(var k=0;k<limit;k++){
+    var mi = Math.floor(k / r.tpm), j = k % r.tpm;
+    h += "<tr><td>SEQ " + (mi+1) + " · r" + (Math.floor(j/r.I.tileCols)+1) + "c" + (j%r.I.tileCols+1) + "</td>";
+    for(var s2=0;s2<n;s2++){ var cn = camNoSeq(r,s2,k); h += '<td class="sc'+s2+'">' + (cn ? "C"+cn : "–") + "</td>"; }
+    h += "</tr>";
+  }
+  if(r.seqTiles > limit) h += '<tr><td colspan="'+(n+1)+'">… '+(r.seqTiles-limit)+' more tiles not listed.</td></tr>';
+  tb.innerHTML = h + "</tbody>";
+  highlightSchedCol();
+}
+function highlightSchedCol(){
+  var cells = $("schedTbl").querySelectorAll("td,th");
+  for(var i=0;i<cells.length;i++){ var c=cells[i]; if(c.className.indexOf("sc")>-1) c.classList.toggle("cur", c.classList.contains("sc"+setIdx)); }
+}
+var ST_LABEL = {PASS:"PASS",FAIL:"FAIL",INFO:"INFO",REVIEW:"REVIEW",OK:"OK",OPT:"OPT PASS"};
+function drawComp(){
+  var h = "<thead><tr><th>Check</th><th>Design value</th><th>Requirement</th><th>Reference</th><th>Status</th></tr></thead><tbody>";
+  R.checks.forEach(function(c){
+    h += "<tr><td><b>"+esc(c.check)+"</b><div class='ref'>"+esc(c.group)+"</div></td><td class='num' style='white-space:normal'>"+esc(c.value)+"</td><td>"+esc(c.req)+"</td><td class='ref'>"+esc(c.ref)+"</td><td><span class='st "+c.st+"'>"+ST_LABEL[c.st]+"</span></td></tr>";
+  });
+  $("compTbl").innerHTML = h + "</tbody>";
+}
+
+/* ---------- space tab ---------- */
+function drawSpace(){
+  var r = R, I = r.I, s = r.space;
+  if(I.spSrc !== "manual"){ $("spOutW").value = fmt(s.p.ow,1); $("spOutH").value = fmt(s.p.oh,1); }
+  setText("spSrcHint", I.spSrc === "manual" ? "Enter the outer (bezel-to-bezel) dimensions from the datasheet. Active area is taken as outer − 2 × bezel per edge (" + fmt(I.bezel,2) + " mm) for the tile check."
+      : "Outer size = active " + fmt(s.p.aw,1) + " × " + fmt(s.p.ah,1) + " mm + 2 × " + fmt(I.bezel,2) + " mm bezel. Choose Manual to type datasheet outer dimensions.");
+  if(r.cols === 0){ ["sTopAFF","sCeilReq","sDispW","sTotW","sDispH","sDepth","sTile","sAng"].forEach(function(id){ setText(id,"–"); }); $("elev").innerHTML = "<p class='hint' style='padding:10px'>No wall monitors.</p>"; $("cmpTbl").innerHTML=""; return; }
+  setText("sTopAFF", mm(s.topAFF)); setText("sTopAFFs", mm(I.spBottom) + " + " + mm(s.dispH));
+  setText("sCeilReq", mm(s.ceilReq)); setText("sCeilReqS", s.ceilOk === null ? "+" + mm(I.spTop) + " clearance" : (s.ceilOk ? "fits " + mm(I.spCeil) + " (" + mm(I.spCeil - s.ceilReq) + " spare)" : "short by " + mm(s.ceilReq - I.spCeil)));
+  $("sCeilReq").style.color = s.ceilOk === false ? "#ff8a83" : "#7cc4ff";
+  setText("sDispW", mm(s.dispW)); setText("sDispWs", r.cols + " × " + fmt(s.p.ow,1) + " mm");
+  setText("sTotW", mm(s.totW)); setText("sTotWs", s.widthOk === null ? "+ 2 × " + mm(I.spSide) : (s.widthOk ? "fits " + mm(I.spAvailW) : "short by " + mm(s.totW - I.spAvailW)));
+  $("sTotW").style.color = s.widthOk === false ? "#ff8a83" : "#7cc4ff";
+  setText("sDispH", mm(s.dispH)); setText("sDispHs", r.rows + " × " + fmt(s.p.oh,1) + " mm");
+  setText("sDepth", mm(s.depth)); setText("sDepthS", I.spRear > 0 ? mm(I.spDepth) + " + " + mm(I.spRear) + " rear service" : "front-service mount");
+  setText("sTile", fmt(s.fit.iw,1) + " × " + fmt(s.fit.ih,1)); setText("sTileS", (s.fit.ok ? "SIRA PASS" : "SIRA FAIL") + " at " + I.tileCols + "×" + I.tileRows + " split");
+  $("sTile").style.color = s.fit.ok ? "#5fe07a" : "#ff8a83";
+  setText("sAng", fmt(s.hAngle,0) + "° / " + fmt(s.vAngle,0) + "°"); setText("sAngS", "horizontal / upward at " + fmt(I.ergDist,1) + " m");
+  $("elev").innerHTML = elevationSVG(r, s, false);
+
+  var h = "<thead><tr><th>Size</th><th>Outer W × H (mm)</th><th>Tile image (mm)</th><th>SIRA tile</th><th>Display W × H (mm)</th><th>Top of wall AFF</th><th>Ceiling needed</th><th>Width incl. clearance</th><th>H. angle</th></tr></thead><tbody>";
+  var list = SIZES.slice(); if(I.spSrc === "manual") list.push("manual"); if(I.spSrc === "calc") list.unshift("calc");
+  list.forEach(function(src){
+    var x = spaceFor(r, src), sel = src === I.spSrc;
+    var ceilTxt = mm(x.ceilReq) + (x.ceilOk === false ? " ✕" : "");
+    h += "<tr class='pick" + (sel ? " sel" : "") + "' data-src='" + src + "'><td><b>" + esc(x.p.label) + "</b></td><td class='num'>" + fmt(x.p.ow,1) + " × " + fmt(x.p.oh,1) + "</td><td class='num'>" + fmt(x.fit.iw,1) + " × " + fmt(x.fit.ih,1) +
+      "</td><td><span class='st " + (x.fit.ok ? "PASS" : "FAIL") + "'>" + (x.fit.ok ? "PASS" : "FAIL") + "</span></td><td class='num'>" + Math.round(x.dispW) + " × " + Math.round(x.dispH) +
+      "</td><td class='num'>" + mm(x.topAFF) + "</td><td class='num' style='color:" + (x.ceilOk === false ? "#ff8a83" : "inherit") + "'>" + ceilTxt + "</td><td class='num' style='color:" + (x.widthOk === false ? "#ff8a83" : "inherit") + "'>" + mm(x.totW) +
+      "</td><td class='num' style='color:" + (x.hAngle > I.ergH ? "#f2c25c" : "inherit") + "'>" + fmt(x.hAngle,0) + "°</td></tr>";
+  });
+  $("cmpTbl").innerHTML = h + "</tbody>";
+}
+
+function elevationSVG(r, s, light){
+  var I = r.I, p = s.p;
+  var C = light ? {bg:"#ffffff", fg:"#000000", dim:"#333333", floor:"#000000", clr:"#e8f1fb", clrS:"#5a8fc4", crit:"#f3c3a1", seq:"#a9dde2", map:"#cfc6f2", empty:"#ffffff", ceil:"#000000", bad:"#b00020", mon:"#000000"}
+                 : {bg:"#05080b", fg:"#d5dde6", dim:"#8a99ab", floor:"#8a99ab", clr:"#0f2133", clrS:"#3fa9f5", crit:"#b5541d", seq:"#16707a", map:"#5b4bb0", empty:"#0b1016", ceil:"#d29922", bad:"#ff8a83", mon:"#000000"};
+  var W = s.dispW, H = s.dispH, side = I.spSide, top = I.spTop, bot = I.spBottom;
+  var ceilY = Math.max(s.ceilReq, I.spCeil > 0 ? I.spCeil : 0);
+  var base = Math.max(W + 2*side, ceilY), fs = Math.max(60, base/42);
+  var mL = fs*11, mR = fs*21, mT = fs*3, mB = fs*6.5;
+  var vbX = -side - mL, vbW = W + 2*side + mL + mR, vbY = -(ceilY + mT), vbH = ceilY + mT + mB;
+  var lw = Math.max(4, fs/14);
+  var o = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vbX + ' ' + vbY + ' ' + vbW + ' ' + vbH + '" font-family="Arial, sans-serif" font-size="' + fs + '">';
+  o += '<rect x="' + vbX + '" y="' + vbY + '" width="' + vbW + '" height="' + vbH + '" fill="' + C.bg + '"/>';
+  // clearance zone
+  o += '<rect x="' + (-side) + '" y="' + (-(s.ceilReq)) + '" width="' + (W + 2*side) + '" height="' + (s.ceilReq - bot) + '" fill="' + C.clr + '" stroke="' + C.clrS + '" stroke-width="' + lw + '" stroke-dasharray="' + (lw*5) + ' ' + (lw*3) + '"/>';
+  // monitors
+  for(var y=0;y<r.rows;y++) for(var x=0;x<r.cols;x++){
+    var m = r.grid[y][x];
+    var px = x*(p.ow + I.spGap), py = -(bot + H - y*(p.oh + I.spGap));
+    var fill = m ? C[m.type] : C.empty;
+    o += '<rect x="' + px + '" y="' + py + '" width="' + p.ow + '" height="' + p.oh + '" fill="' + fill + '" stroke="' + (m ? C.mon : C.dim) + '" stroke-width="' + lw + '"' + (m ? '' : ' stroke-dasharray="' + (lw*4) + ' ' + (lw*3) + '"') + '/>';
+    var lab = m ? (m.type === "crit" ? "CRIT " + m.n : m.type === "seq" ? "SEQ " + m.n : "MAP " + m.n) : "BLANK";
+    o += '<text x="' + (px + p.ow/2) + '" y="' + (py + p.oh/2 + fs*0.35) + '" text-anchor="middle" fill="' + (light ? "#000000" : "#ffffff") + '" font-weight="bold" font-size="' + Math.min(fs, p.ow/6) + '">' + lab + '</text>';
+  }
+  // floor + ceiling lines
+  o += '<line x1="' + vbX + '" y1="0" x2="' + (vbX + vbW) + '" y2="0" stroke="' + C.floor + '" stroke-width="' + lw*2 + '"/>';
+  o += '<text x="' + (vbX + fs*0.5) + '" y="' + (-fs*0.4) + '" fill="' + C.fg + '" font-weight="bold">FFL ±0</text>';
+  if(I.spCeil > 0){
+    var cOk = s.ceilOk;
+    o += '<line x1="' + vbX + '" y1="' + (-I.spCeil) + '" x2="' + (vbX + vbW) + '" y2="' + (-I.spCeil) + '" stroke="' + (cOk ? C.ceil : C.bad) + '" stroke-width="' + lw*2 + '" stroke-dasharray="' + lw*8 + ' ' + lw*4 + '"/>';
+    o += '<text x="' + (vbX + fs*0.5) + '" y="' + (-I.spCeil - fs*0.4) + '" fill="' + (cOk ? C.ceil : C.bad) + '" font-weight="bold">Ceiling ' + Math.round(I.spCeil) + '</text>';
+  }
+  // vertical dims on right
+  var dx1 = W + side + fs*1.5, dx2 = dx1 + fs*10;
+  o += vdim(dx1, 0, bot, mm(bot) + " to bottom");
+  o += vdim(dx1, bot, bot + H, mm(H) + " display");
+  o += vdim(dx1, bot + H, s.ceilReq, mm(top) + " clearance");
+  o += vdim(dx2, 0, bot + H, mm(bot + H) + " top AFF");
+  // horizontal dims below floor
+  o += hdim(0, W, fs*2.2, mm(W) + " display width");
+  o += hdim(-side, W + side, fs*4.6, mm(W + 2*side) + " overall incl. " + mm(side) + " each side");
+  o += '</svg>';
+  return o;
+
+  function vdim(x, a, b, t){
+    if(b - a <= 0) return "";
+    var y1 = -a, y2 = -b, tk = fs*0.35;
+    return '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="' + C.dim + '" stroke-width="' + lw + '"/>' +
+      '<line x1="' + (x - tk) + '" y1="' + y1 + '" x2="' + (x + tk) + '" y2="' + y1 + '" stroke="' + C.dim + '" stroke-width="' + lw + '"/>' +
+      '<line x1="' + (x - tk) + '" y1="' + y2 + '" x2="' + (x + tk) + '" y2="' + y2 + '" stroke="' + C.dim + '" stroke-width="' + lw + '"/>' +
+      '<text x="' + (x + fs*0.5) + '" y="' + ((y1 + y2)/2 + fs*0.35) + '" fill="' + C.fg + '" font-size="' + fs*0.85 + '">' + t + '</text>';
+  }
+  function hdim(a, b, yOff, t){
+    var y = yOff, tk = fs*0.35;
+    return '<line x1="' + a + '" y1="' + y + '" x2="' + b + '" y2="' + y + '" stroke="' + C.dim + '" stroke-width="' + lw + '"/>' +
+      '<line x1="' + a + '" y1="' + (y - tk) + '" x2="' + a + '" y2="' + (y + tk) + '" stroke="' + C.dim + '" stroke-width="' + lw + '"/>' +
+      '<line x1="' + b + '" y1="' + (y - tk) + '" x2="' + b + '" y2="' + (y + tk) + '" stroke="' + C.dim + '" stroke-width="' + lw + '"/>' +
+      '<text x="' + ((a + b)/2) + '" y="' + (y - fs*0.3) + '" text-anchor="middle" fill="' + C.fg + '" font-size="' + fs*0.85 + '">' + t + '</text>';
+  }
+}
+
+/* ---------- sequence playback ---------- */
+function updateSeqUI(){
+  if(!R) return;
+  var n = Math.max(1, R.setsUsed), pill = $("setPill");
+  pill.textContent = "Set " + (setIdx+1) + " of " + n;
+  pill.style.background = SET_COLORS[setIdx % SET_COLORS.length];
+  if(R.norm === 0){ setText("seqInfo","No normal cameras to sequence."); return; }
+  setText("seqInfo", "Dwell " + fmt(R.dwell,1) + " s · next set in " + Math.ceil(Math.max(0, R.dwell - elapsed)) + " s · full cycle " + R.I.seqCycle + " s");
+}
+function tick(){
+  if(!R || R.setsUsed === 0) return;
+  elapsed += 0.25 * ($("fast").checked ? 10 : 1);
+  if(elapsed >= R.dwell){ elapsed = 0; setIdx = (setIdx + 1) % R.setsUsed; paintSeq(); highlightSchedCol(); }
+  updateSeqUI();
+}
+function stopTimer(){ if(timer){ clearInterval(timer); timer = null; } }
+function updatePlayBtn(){ $("bPlay").textContent = play ? "❚❚ Pause" : "▶ Play sequence"; }
+window.togglePlay = function(){ if(!R || R.setsUsed === 0) return; play = !play; stopTimer(); if(play) timer = setInterval(tick, 250); updatePlayBtn(); };
+window.resetSeq = function(){ stopTimer(); play = false; setIdx = 0; elapsed = 0; updatePlayBtn(); if(R){ paintSeq(); highlightSchedCol(); updateSeqUI(); } };
+
+/* ---------- save / load / defaults ---------- */
+function getVals(){ var o = {}; FIELDS.forEach(function(id){ var el=$(id); o[id] = el.type === "checkbox" ? el.checked : el.value; }); return o; }
+function setVals(o){
+  FIELDS.forEach(function(id){
+    if(!Object.prototype.hasOwnProperty.call(o,id) || o[id] === null || o[id] === undefined) return;
+    var el = $(id);
+    if(el.type === "checkbox") el.checked = !!o[id];
+    else if(el.tagName === "SELECT"){
+      var v = String(o[id]), ok = false;
+      for(var i=0;i<el.options.length;i++) if(el.options[i].value === v) ok = true;
+      if(ok) el.value = v;
+    } else el.value = String(o[id]);
+  });
+}
+window.saveConfig = function(){
+  var data = { app:"ControlRoomCalculator", version:"V04", saved:new Date().toISOString(), fields:getVals(),
+               layout: R && R.custom ? layout : null };
+  var name = ($("pName").value.trim() || "Monitor_Config").replace(/[^\w\-]+/g,"_");
+  var blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name + "_V04.json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 500);
+};
+window.loadConfig = function(e){
+  var f = e.target.files && e.target.files[0]; if(!f) return;
+  var rd = new FileReader();
+  rd.onload = function(ev){
+    try{
+      var d = JSON.parse(ev.target.result), o;
+      if(d && d.fields){
+        o = d.fields;
+        if(o.ergBottom !== undefined && o.spBottom === undefined) o.spBottom = Math.round(parseFloat(o.ergBottom)*1000);   // V03 file
+        pendingLayout = d.layout || null;
+      } else if(d && ("c" in d || "sp" in d)){            // V_02 file
+        o = {};
+        if("p" in d) o.pName = d.p; if("c" in d) o.camTotal = d.c; if("m" in d) o.critMode = d.m;
+        if("v" in d) o.critVal = d.v; if("sp" in d){ o.tileCols = d.sp; o.tileRows = d.sp; }
+        if("sz" in d && PRESETS[String(d.sz)]){ o.wallSize = String(d.sz); o.actW = PRESETS[String(d.sz)][0]; o.actH = PRESETS[String(d.sz)][1]; }
+        else if("sz" in d){ o.wallSize = "custom"; var w = d.sz*25.4*16/Math.sqrt(337); o.actW = fmt(w,1); o.actH = fmt(w*9/16,1); }
+      } else throw new Error("format");
+      setVals(o); layoutSig = ""; resetSeq(); render();
+    } catch(err){ $("errbox").style.display="block"; $("errlist").innerHTML = "<li>That file is not a calculator configuration (V_02, V03 or V04).</li>"; }
+    e.target.value = "";
+  };
+  rd.readAsText(f);
+};
+window.resetDefaults = function(){ setVals(defaults); layoutSig = ""; editMode = false; resetSeq(); render(); };
+
+/* ---------- print ---------- */
+function wallSVG(r){
+  if(r.cols === 0) return "<p>No wall monitors.</p>";
+  var W = 700, mw = W / r.cols, mh = mw * r.I.actH / r.I.actW, g = 3, H = r.rows*mh;
+  var col = {crit:"#f3c3a1", seq:"#a9dde2", map:"#cfc6f2"};
+  var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+(H+2)+'" width="'+W+'" height="'+(H+2)+'" font-family="Arial" font-size="'+Math.max(8,Math.min(14,mw/9))+'">';
+  for(var y=0;y<r.rows;y++) for(var x=0;x<r.cols;x++){
+    var c = r.grid[y][x], lab = !c ? "BLANK" : c.type==="crit"?"CRIT "+c.n:c.type==="seq"?"SEQ "+c.n:"MAP "+c.n, sub = "";
+    if(c && c.type==="crit"){ var a=c.order*r.tpm+1, b=Math.min(r.crit,(c.order+1)*r.tpm); sub = a<=b ? "C"+a+"–C"+b : ""; }
+    s += '<rect x="'+(x*mw+g/2)+'" y="'+(y*mh+g/2+1)+'" width="'+(mw-g)+'" height="'+(mh-g)+'" fill="'+(c?col[c.type]:"#ffffff")+'" stroke="#000000" stroke-width="1" '+(c?'':'stroke-dasharray="4 3"')+'/>';
+    s += '<text x="'+(x*mw+mw/2)+'" y="'+(y*mh+mh/2)+'" text-anchor="middle" fill="#000000" font-weight="bold">'+lab+'</text>';
+    if(sub) s += '<text x="'+(x*mw+mw/2)+'" y="'+(y*mh+mh/2+Math.max(10,mw/8))+'" text-anchor="middle" fill="#000000">'+sub+'</text>';
+  }
+  return s + "</svg>";
+}
+function buildReport(){
+  var pa = $("print-area");
+  if(!R){ pa.innerHTML = "<h1>Control Room Video Wall Design Report</h1><p>Inputs are invalid. Fix them before printing.</p>"; return; }
+  var r = R, I = r.I, s = r.space, name = I.pName || "Untitled project";
+  var fails = r.checks.filter(function(c){return c.st==="FAIL";}).length;
+  function row(k,v){ return "<tr><th style='width:42%'>"+k+"</th><td>"+v+"</td></tr>"; }
+  var h = "<h1>"+esc(name)+"</h1><div class='meta'>Control Room Video Wall Design Report · Calculator V04 · "+new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})+" · Basis: SIRA Administrative Resolution No. 13 of 2025</div>";
+  h += "<div class='banner'>Wall monitors required: "+r.totalMon+" ("+r.critMon+" critical + "+r.seqMon+" sequence"+(I.mapMon?" + "+I.mapMon+" map/data":"")+") · Wall "+r.cols+" × "+r.rows+(r.custom?" (custom)":"")+" · SIRA: "+(fails?fails+" FAIL":"ALL MANDATORY CHECKS PASS")+"</div>";
+  h += "<div class='two sec'><div><h2>1. Inputs</h2><table>"+
+    row("Project",esc(name))+row("Room type",I.facility==="moc"?"Security Monitoring Operations Centre":"Facility control room")+
+    row("Total cameras",I.camTotal)+row("Critical input",I.critMode==="pct"?I.critVal+" %":I.critVal+" cameras")+
+    row("Camera aspect",I.camAspectLbl)+row("Recorders",I.recorders)+
+    row("Sequence",I.seqSets+" sets max, "+I.seqCycle+" s cycle")+
+    row("Wall panel",(I.wallSize==="custom"?"Custom":I.wallSize+'"')+", active "+fmt(I.actW,1)+" × "+fmt(I.actH,1)+" mm, bezel "+fmt(I.bezel,2)+" mm/edge, "+I.wallRes+"p")+
+    row("Split",I.tileCols+" × "+I.tileRows+" ("+r.tpm+" tiles)")+
+    row("Workstations",I.opCount+" operator(s) × "+I.wsPerOp+" × "+fmt(I.wsSize,1)+'", '+I.wsRes+"p")+
+    "</table></div><div><h2>2. Results</h2><table>"+
+    row("Critical cameras (static)",r.crit+(r.crit?" → C1–C"+r.crit:""))+row("Normal cameras (sequenced)",r.norm+(r.norm?" → C"+(r.crit+1)+"–C"+I.camTotal:""))+
+    row("Critical monitors",r.critMon+" (capacity "+r.capStatic+")")+row("Sequence tiles",r.seqTiles+" (needed "+r.seqTilesNeeded+")")+
+    row("Sequence monitors",r.seqMon+" (capacity "+r.capSeq+")")+row("Sets used / dwell",r.norm?r.setsUsed+" sets, "+fmt(r.dwell,1)+" s each":"–")+
+    row("Tile image",fmt(r.imgW,1)+" × "+fmt(r.imgH,1)+" mm")+row("Wall grid",r.cols+" × "+r.rows+" ("+r.empty+" empty slot(s))")+
+    row("Workstation monitors",r.wsTotal)+
+    "</table></div></div>";
+  h += "<div class='sec'><h2>3. Compliance and advisory checks</h2><table><tr><th>Check</th><th>Design value</th><th>Requirement</th><th>Reference</th><th>Status</th></tr>";
+  r.checks.forEach(function(c){ h += "<tr><td>"+esc(c.check)+"</td><td>"+esc(c.value)+"</td><td>"+esc(c.req)+"</td><td>"+esc(c.ref)+"</td><td class='p-"+c.st+"'>"+ST_LABEL[c.st]+"</td></tr>"; });
+  h += "</table></div>";
+  h += "<div class='sec'><h2>4. Wall layout (operator view)</h2>"+wallSVG(r)+"<p style='font-size:8.5pt'>Critical monitors at centre (static). Sequence monitors at the edges. "+fmt(I.bezel*2,2)+" mm bezel-to-bezel.</p></div>";
+  if(r.cols > 0){
+    h += "<div class='sec pb'><h2>5. Space requirement ("+esc(s.p.label)+")</h2><div class='two'><table>"+
+      row("Panel outer size",fmt(s.p.ow,1)+" × "+fmt(s.p.oh,1)+" mm")+row("Display width",mm(s.dispW))+row("Display height",mm(s.dispH))+
+      row("FFL to bottom of wall",mm(I.spBottom))+row("Top of wall above FFL",mm(s.topAFF))+
+      "</table><table>"+row("Clearance above top row",mm(I.spTop))+row("Ceiling height needed",mm(s.ceilReq)+(s.ceilOk===null?"":s.ceilOk?" (fits "+mm(I.spCeil)+")":" (SHORT of "+mm(I.spCeil)+")"))+
+      row("Side clearance",mm(I.spSide)+" each side")+row("Overall width",mm(s.totW)+(s.widthOk===null?"":s.widthOk?" (fits)":" (exceeds "+mm(I.spAvailW)+")"))+
+      row("Depth from wall",mm(s.depth))+"</table></div>"+elevationSVG(r, s, true)+
+      "<p style='font-size:8.5pt'>Clearances are planning values entered by the designer, not SIRA requirements. Confirm against the panel manufacturer's installation guide.</p></div>";
+  }
+  h += "<div class='foot'><b>Interpretation notes.</b> The 120 × 67 mm image minimum is applied to video wall monitors (Display item 5 remark); it is not clearly required for workstation monitors. The 4 mm outer-frame limit is read as per edge. The manual sets no operator-to-camera ratio, viewing-distance or wall clearance rule; ergonomic and space rows are advisory. Clause pages are from the English translation (±1 page); the Arabic text prevails.</div>";
+  pa.innerHTML = h;
+}
+window.printReport = function(){ buildReport(); window.print(); };
+window.addEventListener("beforeprint", buildReport);
+
+/* ---------- wiring ---------- */
+function init(){
+  defaults = getVals();
+  FIELDS.forEach(function(id){
+    var el = $(id);
+    el.addEventListener(el.type === "checkbox" || el.tagName === "SELECT" ? "change" : "input", function(){
+      if(id === "wallSize"){ var p = PRESETS[el.value]; if(p){ $("actW").value = p[0]; $("actH").value = p[1]; } }
+      if(id === "critMode" && R){ $("critVal").value = el.value === "pct" ? String(R.I.camTotal ? Math.round(R.crit*100/R.I.camTotal) : 0) : String(R.crit); }
+      if(id === "wallRows") layoutSig = "";
+      render();
+    });
+  });
+  var st = document.querySelectorAll(".stab");
+  for(var i=0;i<st.length;i++) st[i].addEventListener("click", function(){
+    for(var j=0;j<st.length;j++){ st[j].classList.remove("on"); $(st[j].getAttribute("data-s")).classList.remove("on"); }
+    this.classList.add("on"); $(this.getAttribute("data-s")).classList.add("on");
+  });
+  var tabs = document.querySelectorAll(".tab");
+  for(var t=0;t<tabs.length;t++) tabs[t].addEventListener("click", function(){
+    for(var j=0;j<tabs.length;j++){ tabs[j].classList.remove("on"); $(tabs[j].getAttribute("data-p")).classList.remove("on"); }
+    this.classList.add("on"); $(this.getAttribute("data-p")).classList.add("on");
+    if(this.getAttribute("data-p") === "pWall" && R) drawWall();
+  });
+  var rb = document.querySelectorAll("[data-rows]");
+  for(var k=0;k<rb.length;k++) rb[k].addEventListener("click", function(){ $("wallRows").value = this.getAttribute("data-rows"); layoutSig = ""; render(); });
+  $("bEdit").addEventListener("click", function(){ editMode = !editMode; if(R) drawWall(); });
+  $("bAuto").addEventListener("click", function(){ layoutSig = ""; render(); });
+  $("wall").addEventListener("pointerdown", onDown);
+  $("cmpTbl").addEventListener("click", function(e){
+    var tr = e.target.closest ? e.target.closest("tr[data-src]") : null;
+    if(tr){ $("spSrc").value = tr.getAttribute("data-src"); render(); }
+  });
+  var rt; window.addEventListener("resize", function(){ clearTimeout(rt); rt = setTimeout(function(){ if(R) drawWall(); }, 150); });
+  render();
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+})();
+</script>
+</body>
+</html>

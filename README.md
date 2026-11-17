@@ -1,8 +1,12 @@
 # Control Room Video Wall Monitor Calculator — V04
 
+**Website:** https://ajigangadharan.github.io/Control-Room-Monitor-CAL/ · **Web version:** [calculator.html](https://ajigangadharan.github.io/Control-Room-Monitor-CAL/calculator.html) · **Download:** [latest release](https://github.com/ajigangadharan/Control-Room-Monitor-CAL/releases/latest)
+
+![Calculator main window](images/main.jpg)
+
 A single-file calculator for sizing CCTV control room video walls in Dubai. It checks each design against **SIRA Administrative Resolution No. 13 of 2025**. It works out the wall monitor quantity, checks SIRA compliance clause by clause, lets you arrange the wall with drag and drop, and calculates the physical space the wall needs.
 
-Open `index.html` in any modern browser. Nothing needs installing. A Windows desktop build is in `desktop/`.
+Open `calculator.html` in any modern browser. Nothing needs installing. A Windows desktop build is in `desktop/`.
 
 ## What it does
 
@@ -38,7 +42,9 @@ Open `index.html` in any modern browser. Nothing needs installing. A Windows des
 
 | Path | Contents |
 |---|---|
-| `index.html` | The calculator (browser version) |
+| `index.html` | Landing page (GitHub Pages) with screenshots and download links |
+| `calculator.html` | The calculator (browser version) |
+| `images/` | Interface screenshots |
 | `desktop/` | Electron wrapper for a Windows portable `.exe` (fonts bundled for offline use) |
 | `docs/User_Manual_V04.docx` | User manual |
 
@@ -50,7 +56,7 @@ npm install
 npm run build:win     # creates dist/Control_Room_Calculator_V04_Portable.exe
 ```
 
-`npm start` runs it locally. The build copies `../index.html` into the app and points it at the local fonts. The .exe is unsigned, so Windows SmartScreen shows "More info → Run anyway" the first time it runs.
+`npm start` runs it locally. The build copies `../calculator.html` into the app and points it at the local fonts. The .exe is unsigned, so Windows SmartScreen shows "More info → Run anyway" the first time it runs.
 
 ## Notes
 
