@@ -1,0 +1,48 @@
+{
+  "name": "control-room-calculator",
+  "productName": "Control Room Calculator",
+  "version": "4.0.0",
+  "description": "Control room video wall monitor calculator (SIRA Res. 13/2025)",
+  "main": "main.js",
+  "author": "Aji",
+  "license": "UNLICENSED",
+  "build": {
+    "appId": "local.controlroom.calculator",
+    "productName": "Control Room Calculator",
+    "files": [
+      "main.js",
+      "index.html",
+      "fonts/**"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "icon": "icon.png",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "Control_Room_Calculator_V04_Portable.exe"
+    },
+    "nsis": {
+      "artifactName": "Control_Room_Calculator_V04_Setup.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Control Room Calculator"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "scripts": {
+    "prepare-html": "node -e \"const fs=require('fs');let s=fs.readFileSync('../calculator.html','utf8');s=s.replace(/<link rel=\\\"preconnect\\\"[^>]*>\\r?\\n/g,'').replace(/<link href=\\\"https:\\/\\/fonts.googleapis.com[^>]*>/,'<link href=\\\"fonts/fonts.css\\\" rel=\\\"stylesheet\\\">');fs.writeFileSync('index.html',s)\"",
+    "start": "npm run prepare-html && electron .",
+    "build:win": "npm run prepare-html && electron-builder --win portable --x64"
+  }
+}
